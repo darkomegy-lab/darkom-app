@@ -164,8 +164,8 @@
         // =====================================================================
         // 1. MASTER CATALOG (130 APPROVED ITEMS + 12 OPEN UNPRICED SLOTS)
         // =====================================================================
-        const STORAGE_VERSION = 'darkom_v14_rev123_2026';
-        const APP_VERSION = '1.2.3';
+        const STORAGE_VERSION = 'darkom_v14_rev124_2026';
+        const APP_VERSION = '1.2.4';
         const REMOTE_CONFIG_URL = 'https://raw.githubusercontent.com/darkomegy-lab/darkom-app/main/prices.json';
         const BUSINESS_PHONE = '01025013991';
         const BUSINESS_PHONE_INTL = '201025013991';
@@ -1837,10 +1837,10 @@
                 const doc = this.getDoc(id); if (!doc) return;
                 this.issueDoc('invoice', doc);
             },
-            async renderDocCanvas(doc) {
+            async renderDocCanvas(doc, scale) {
                 if (typeof html2canvas === 'undefined') throw new Error('مكتبة التصدير غير محملة');
                 const host = document.createElement('div');
-                host.style.cssText = 'position:fixed;left:-10000px;top:0;width:794px;background:#fff;z-index:-1';
+                host.id = 'doc-export-host'; host.style.cssText = 'position:absolute;left:0;top:0;width:794px;background:#fff;z-index:-1;visibility:hidden;pointer-events:none';
                 host.innerHTML = this.docHtml(doc);
                 document.body.appendChild(host);
                 try {
@@ -1848,12 +1848,24 @@
                     const imgs = Array.from(host.querySelectorAll('img'));
                     await Promise.all(imgs.map(im => im.complete ? 1 : new Promise(r => { im.onload = im.onerror = r; })));
                     await new Promise(r => setTimeout(r, 200));
-                    return await html2canvas(host.firstElementChild, { scale: 2, backgroundColor: '#ffffff', useCORS: true, logging: false });
+                    const el = host.firstElementChild, W = 794, H = Math.max(el.scrollHeight, el.offsetHeight, 1123);
+                    return await html2canvas(el, {
+                        scale: scale || 2, backgroundColor: '#ffffff', useCORS: true, logging: false,
+                        width: W, height: H, windowWidth: W, windowHeight: H, x: 0, y: 0, scrollX: 0, scrollY: 0,
+                        onclone: (d) => { const h = d.getElementById('doc-export-host'); if (h) { h.style.cssText = 'position:absolute;left:0;top:0;width:794px;background:#fff;visibility:visible'; } }
+                    });
                 } finally { host.remove(); }
             },
             async docBlob(doc, kind) {
-                const c = await this.renderDocCanvas(doc);
-                if (kind === 'png') return await new Promise(r => c.toBlob(r, 'image/png'));
+                const c = await this.renderDocCanvas(doc, 2);
+                if (kind === 'png') {
+                    // حجم مناسب لشاشة الموبايل: عرض 1080px (يُصغَّر من نسخة 2x لأن الخط يبقى أوضح)
+                    const tw = 1080, th = Math.round(c.height * tw / c.width);
+                    const sm = document.createElement('canvas'); sm.width = tw; sm.height = th;
+                    const sx = sm.getContext('2d'); sx.imageSmoothingQuality = 'high'; sx.fillStyle = '#fff'; sx.fillRect(0, 0, tw, th);
+                    sx.drawImage(c, 0, 0, tw, th);
+                    return await new Promise(r => sm.toBlob(r, 'image/png'));
+                }
                 const jsPDFc = window.jspdf && window.jspdf.jsPDF;
                 if (!jsPDFc) throw new Error('مكتبة PDF غير محملة');
                 const pdf = new jsPDFc({ unit: 'pt', format: 'a4', compress: true });
