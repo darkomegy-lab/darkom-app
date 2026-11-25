@@ -38,7 +38,16 @@
         body { font-family: 'Cairo', sans-serif; background-color: #F8FAFC; -webkit-tap-highlight-color: transparent; }
         .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 12px); }
         .glass-panel { background: rgba(255, 255, 255, 0.96); backdrop-filter: blur(10px); border: 1px solid rgba(30, 77, 43, 0.12); }
-        .nav-item.active { color: #1E4D2B; font-weight: 800; }
+        .nav-item { color: #6F9477 !important; width: 100%; justify-content: flex-end; white-space: nowrap; font-size: 10.5px !important; padding-left: 0 !important; padding-right: 0 !important; }
+        .nav-item svg { transition: transform .15s; }
+        .nav-item.active { color: #143620 !important; font-weight: 900; }
+        .nav-item.active svg { transform: scale(1.3); }
+        .nav-item.active:not(.nav-home) svg { margin-bottom: 3px; }
+        .nav-item.nav-contact { color: #B08A12 !important; }
+        .nav-item.nav-contact.active { color: #7A5F08 !important; }
+        .nav-home .nav-circle { background: #F0CE41; color: #1E4D2B; transition: transform .15s; }
+        .nav-home.active .nav-circle { transform: scale(1.15); background: #E0B820; color: #143620; box-shadow: 0 4px 10px rgba(30,77,43,.35); }
+        #contact-sheet { transition: opacity .2s; }
         .desktop-nav-btn.active { color: #1E4D2B; border-bottom: 3px solid #F0CE41; }
         .admin-nav-item.active { color: #1E4D2B; border-bottom: 3px solid #1E4D2B; background: rgba(30,77,43,0.06); }
         .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -74,9 +83,10 @@
             </div>
             <div class="flex items-center gap-2">
                 <button id="pwa-install-btn" onclick="app.installPWA()" class="hidden bg-gold text-primaryDark text-xs font-black px-2.5 py-1.5 rounded-lg shadow hover:bg-goldDark transition whitespace-nowrap">📲<span class="hidden sm:inline"> تثبيت التطبيق</span></button>
-                <a href="tel:+201025013991" class="hidden sm:flex items-center gap-1.5 bg-gold hover:bg-goldDark text-primaryDark text-xs font-black px-3 py-2 rounded-lg transition">
-                    <span>📞 اتصل بينا</span>
-                </a>
+                <button onclick="app.openContact()" class="flex items-center gap-1 bg-gold hover:bg-goldDark text-primaryDark text-xs font-black px-2.5 py-1.5 rounded-lg shadow transition whitespace-nowrap" title="اتصل بنا">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.4" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+                    <span>اتصل بنا</span>
+                </button>
                 <a href="https://wa.me/201025013991" target="_blank" class="hidden sm:flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition">
                     <span>01025013991</span>
                 </a>
@@ -121,29 +131,29 @@
 
     <!-- Mobile Public Bottom Navigation -->
     <nav id="public-nav" class="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-[0_-4px_10px_rgba(0,0,0,0.08)] z-40 md:hidden safe-area-bottom">
-        <div class="flex justify-around items-center h-16">
-            <button data-view="prices" onclick="app.navigate('prices')" class="nav-item flex flex-col items-center p-1.5 text-[11px] font-bold text-gray-500">
+        <div class="grid grid-cols-5 items-end h-16 pb-1">
+            <button data-view="prices" onclick="app.navigate('prices')" class="nav-item flex flex-col items-center p-1.5 text-[11px] font-bold">
                 <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                 أسعار أخرى
             </button>
-            <button data-view="worker" onclick="app.navigate('worker')" class="nav-item flex flex-col items-center p-1.5 text-[11px] font-bold text-gray-500">
+            <button data-view="worker" onclick="app.navigate('worker')" class="nav-item flex flex-col items-center p-1.5 text-[11px] font-bold">
                 <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/></svg>
                 الصنايعي 2D
             </button>
-            <button data-view="home" onclick="app.navigate('home')" class="nav-item active flex flex-col items-center p-1.5 text-[11px] font-bold text-primary">
-                <div class="bg-gold text-primaryDark rounded-full p-2 -mt-6 border-4 border-white shadow-md">
+            <button data-view="home" onclick="app.navigate('home')" class="nav-item nav-home active flex flex-col items-center p-1.5 text-[11px] font-bold">
+                <div class="nav-circle rounded-full p-2 -mt-7 border-4 border-white shadow-md">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
                 </div>
                 <span class="mt-0.5">الباقات</span>
             </button>
-            <button data-view="portfolio" onclick="app.navigate('portfolio')" class="nav-item flex flex-col items-center p-1.5 text-[11px] font-bold text-gray-500">
+            <button data-view="portfolio" onclick="app.navigate('portfolio')" class="nav-item flex flex-col items-center p-1.5 text-[11px] font-bold">
                 <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 أعمالنا
             </button>
-            <a href="https://wa.me/201025013991" target="_blank" class="nav-item flex flex-col items-center p-1.5 text-[11px] font-bold text-green-700">
+            <button data-view="contact" onclick="app.openContact()" class="nav-item nav-contact flex flex-col items-center p-1.5 text-[11px] font-bold">
                 <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                 تواصل
-            </a>
+            </button>
         </div>
     </nav>
 
@@ -154,8 +164,8 @@
         // =====================================================================
         // 1. MASTER CATALOG (130 APPROVED ITEMS + 12 OPEN UNPRICED SLOTS)
         // =====================================================================
-        const STORAGE_VERSION = 'darkom_v14_rev122_2026';
-        const APP_VERSION = '1.2.2';
+        const STORAGE_VERSION = 'darkom_v14_rev123_2026';
+        const APP_VERSION = '1.2.3';
         const REMOTE_CONFIG_URL = 'https://raw.githubusercontent.com/darkomegy-lab/darkom-app/main/prices.json';
         const BUSINESS_PHONE = '01025013991';
         const BUSINESS_PHONE_INTL = '201025013991';
@@ -164,7 +174,7 @@
         const WARRANTY_LABEL = WARRANTY_YEARS === 1 ? 'سنة واحدة' : String(WARRANTY_YEARS) + ' سنوات';
         const WORKING_HOURS = 'يومياً من 9 صباحاً حتى 10 مساءً';
         const SERVICE_AREAS = ['الشيخ زايد', '6 أكتوبر', 'حدائق الأهرام', 'المهندسين', 'التجمع الخامس', 'المعادي', 'مدينة نصر', 'كل القاهرة الكبرى والجيزة'];
-        const SOCIAL_LINKS = { facebook: 'https://www.facebook.com/share/1MJ87JwGCr/', instagram: '', tiktok: '' }; // تُملأ عند توفر روابط صفحات النشاط
+        const SOCIAL_LINKS = { facebook: 'https://www.facebook.com/share/1MJ87JwGCr/', instagram: 'https://www.instagram.com/darkomegy', tiktok: '' }; // تُملأ عند توفر روابط صفحات النشاط
         const ADMIN_PIN = '3100355'; // رمز دخول لوحة الإدارة - غيّره من هنا
 
         // تحميل أسعار محدثة عن بعد (prices.json في المستودع) قبل بناء المتجر
@@ -837,8 +847,32 @@
                 document.getElementById('admin-nav').classList.toggle('hidden', !store.isAdmin);
                 document.getElementById('admin-badge').classList.toggle('hidden', !store.isAdmin);
             },
+            openContact() {
+                let el = document.getElementById('contact-sheet'); if (el) el.remove();
+                const row = (href, bg, label, sub, icon) => `<a href="${href}" ${href.startsWith('tel:') ? '' : 'target="_blank" rel="noopener"'} class="flex items-center gap-3 p-3 rounded-2xl border-2 border-gray-100 hover:border-gold transition"><span class="w-11 h-11 rounded-xl flex items-center justify-center text-xl shrink-0" style="background:${bg}">${icon}</span><span class="flex-1 min-w-0"><span class="block font-black text-primaryDark text-sm">${label}</span><span class="block text-xs text-gray-500" dir="ltr" style="text-align:right">${sub}</span></span><span class="text-gold font-black">‹</span></a>`;
+                el = document.createElement('div');
+                el.id = 'contact-sheet';
+                el.className = 'fixed inset-0 z-[60] flex items-end md:items-center justify-center';
+                el.innerHTML = `<div class="absolute inset-0 bg-black/50" onclick="app.closeContact()"></div>
+                    <div class="relative bg-white w-full max-w-md rounded-t-3xl md:rounded-3xl p-4 pb-6 shadow-2xl max-h-[85vh] overflow-y-auto">
+                        <div class="flex items-center justify-between mb-3"><h3 class="font-black text-primaryDark text-lg">📞 تواصل مع داركم</h3><button onclick="app.closeContact()" class="w-9 h-9 rounded-full bg-gray-100 font-black text-primaryDark">✕</button></div>
+                        <div class="space-y-2">
+                            ${row('https://wa.me/' + BUSINESS_PHONE_INTL, '#DCF5E3', 'واتساب', BUSINESS_PHONE, '💬')}
+                            ${row('tel:+' + BUSINESS_PHONE_INTL, '#FBF1C2', 'اتصال هاتفي', BUSINESS_PHONE, '📞')}
+                            ${SOCIAL_LINKS.facebook ? row(SOCIAL_LINKS.facebook, '#DCE8F7', 'صفحة فيسبوك', 'Facebook', '👍') : ''}
+                            ${SOCIAL_LINKS.instagram ? row(SOCIAL_LINKS.instagram, '#F7DCEB', 'انستجرام', '@darkomegy', '📷') : ''}
+                            ${MAPS_URL ? row(MAPS_URL, '#E3EFE5', 'الموقع على الخريطة', 'الحي السابع، الشيخ زايد', '📍') : ''}
+                        </div>
+                    </div>`;
+                document.body.appendChild(el);
+                document.querySelectorAll('.nav-item').forEach(x => x.classList.toggle('active', x.dataset.view === 'contact'));
+            },
+            closeContact() {
+                const el = document.getElementById('contact-sheet'); if (el) el.remove();
+                document.querySelectorAll('.nav-item').forEach(x => x.classList.toggle('active', x.dataset.view === this.currentView || (x.dataset.view === 'home' && ['calc','faq'].includes(this.currentView))));
+            },
             navigate(view) {
-                this.currentView = view;
+                this.currentView = view; const cs = document.getElementById('contact-sheet'); if (cs) cs.remove();
                 const main = document.getElementById('main-content');
                 main.innerHTML = ''; main.className = "max-w-7xl mx-auto px-4 py-4 min-h-screen fade-in";
                 document.querySelectorAll('.nav-item, .desktop-nav-btn').forEach(el => el.classList.toggle('active', el.dataset.view === view || (el.classList.contains('nav-item') && el.dataset.view === 'home' && (view === 'calc' || view === 'faq'))));
