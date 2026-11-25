@@ -1,6 +1,6 @@
 {
   "updated": "2026-11-25",
-  "app_version": "1.1.7",
+  "app_version": "1.1.8",
   "apk_url": "https://github.com/darkomegy-lab/darkom-app/releases/latest",
   "materials": {
     "1": 450,
@@ -165,7 +165,7 @@
     "putty_m": 20
   },
   "config": {
-    "ceiling_margin_pct": 30,
+    "ceiling_margin_pct": 32,
     "systems_margin_pct": 35,
     "min_safe_margin_pct": 15,
     "round_to": 5,
@@ -184,6 +184,6 @@
       "magnetic_supply_sell": 0,
       "profile_open_sell": 40
     },
-    "addon_margin_pct": 35
+    "addon_margin_pct": 15
   }
 }
