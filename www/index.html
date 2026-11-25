@@ -156,8 +156,8 @@
         // =====================================================================
         // 1. MASTER CATALOG (130 APPROVED ITEMS + 12 OPEN UNPRICED SLOTS)
         // =====================================================================
-        const STORAGE_VERSION = 'darkom_v10_rev1110_2026';
-        const APP_VERSION = '1.1.10';
+        const STORAGE_VERSION = 'darkom_v11_rev1111_2026';
+        const APP_VERSION = '1.1.11';
         const REMOTE_CONFIG_URL = 'https://raw.githubusercontent.com/darkomegy-lab/darkom-app/main/prices.json';
         const BUSINESS_PHONE = '01025013991';
         const BUSINESS_PHONE_INTL = '201025013991';
@@ -388,6 +388,7 @@
                 putty_sell: 0,
                 magnetic_install_sell: 100, // بند مقايسة منفصل: تركيب مجناتيك ج/م.ط (قرار المالك)
                 magnetic_supply_sell: 0,    // بند مقايسة منفصل: مجناتيك توريد وتركيب ج/م.ط (السعر لم يحدد بعد)
+                magnetic_corner90_sell: 0,  // بند مقايسة: زاوية 90 مجناتيك ج/قطعة (السعر لم يحدد بعد)
                 profile_open_sell: 40       // بند مقايسة منفصل: تفتيح بروفايل ج/م.ط (قرار المالك)
             }
         };
@@ -1448,6 +1449,7 @@
                                     <option value="x_magnetic_install">تركيب مجناتيك (م.ط)</option>
                                     <option value="x_magnetic_supply">مجناتيك توريد وتركيب (م.ط)</option>
                                     <option value="x_profile_open">تفتيح بروفايل (م.ط)</option>
+                                    <option value="x_magnetic_corner90">زاوية 90 مجناتيك (قطعة)</option>
                                 </select>
                                 <div class="flex gap-2">
                                     <input type="number" id="q-item-qty" value="20" min="1" class="w-24 border-2 rounded-xl px-2 py-2 text-sm font-black text-center">
@@ -1563,11 +1565,11 @@
                 }
                 else if (val.startsWith('x_')) {
                     const ov = ds.config.addon_overrides || {};
-                    const defs = { x_magnetic_install: ['تركيب مجناتيك', ov.magnetic_install_sell], x_magnetic_supply: ['مجناتيك توريد وتركيب', Engine.addonUnit(ds, 'magneticSupply').sellLm], x_profile_open: ['تفتيح بروفايل', ov.profile_open_sell] };
+                    const defs = { x_magnetic_install: ['تركيب مجناتيك', ov.magnetic_install_sell], x_magnetic_supply: ['مجناتيك توريد وتركيب', Engine.addonUnit(ds, 'magneticSupply').sellLm], x_profile_open: ['تفتيح بروفايل', ov.profile_open_sell], x_magnetic_corner90: ['زاوية 90 مجناتيك', ov.magnetic_corner90_sell] };
                     const [lbl, price] = defs[val]; const pr = Number(price) || 0;
                     const cst = val === 'x_magnetic_supply' ? Engine.addonUnit(ds, 'magneticSupply').costLm : pr;
                     if (pr <= 0) { this.toast('حدد سعر ' + lbl + ' أولاً من لوحة الإدارة (العمالة والهوامش)'); return; }
-                    item = { label: lbl, unit: 'م.ط', qty, unitCost: cst, unitSell: pr };
+                    item = { label: lbl, unit: val === 'x_magnetic_corner90' ? 'قطعة' : 'م.ط', qty, unitCost: cst, unitSell: pr };
                 }
                 if (item) { this.quoteDraft.items.push(item); this.adminNavigate('worker_quotes'); }
             },
@@ -1979,9 +1981,10 @@
                                 ${[
                                     ['تركيب مجناتيك', 'magnetic_install_sell', ''],
                                     ['مجناتيك توريد وتركيب (تلقائي = خامة المتر + التركيب + الربح؛ اكتب رقم لتثبيته)', 'magnetic_supply_sell', (() => { const mu = Engine.addonUnit(ds, 'magneticSupply'); return `خامة ${mu.matLm} + تركيب ${mu.labLm} + ربح ${(mu.sellLm - mu.costLm).toFixed(0)} = ${mu.sellLm} ج تلقائي`; })()],
-                                    ['تفتيح بروفايل', 'profile_open_sell', '']
-                                ].map(([label, key, note]) => `<div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl border border-gray-100"><span class="text-xs font-bold text-gray-700">${label} (ج/م.ط)<div class="text-[10px] text-gray-500 font-normal">${note}</div></span><input type="number" min="0" value="${ov[key] || ''}" placeholder="${key==='magnetic_supply_sell' ? 'تلقائي' : 'غير محدد'}" onchange="store.config.addon_overrides.${key}=Math.max(0, Number(this.value)||0); store.markDirty(); app.adminNavigate('labor')" class="w-24 border-2 rounded-lg p-1.5 text-center font-black text-primary bg-white"></div>`).join('')}
-                                <div class="text-[10px] text-gray-400">تظهر في المقايسة (الصنايعي 2D والمقايسات) وتُحسب لوحدها. السعر صفر في تركيب/تفتيح = لا يمكن إضافتها.</div>
+                                    ['تفتيح بروفايل', 'profile_open_sell', ''],
+                                    ['زاوية 90 مجناتيك', 'magnetic_corner90_sell', '']
+                                ].map(([label, key, note]) => `<div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl border border-gray-100"><span class="text-xs font-bold text-gray-700">${label} (${key==='magnetic_corner90_sell' ? 'ج/قطعة' : 'ج/م.ط'})<div class="text-[10px] text-gray-500 font-normal">${note}</div></span><input type="number" min="0" value="${ov[key] || ''}" placeholder="${key==='magnetic_supply_sell' ? 'تلقائي' : 'غير محدد'}" onchange="store.config.addon_overrides.${key}=Math.max(0, Number(this.value)||0); store.markDirty(); app.adminNavigate('labor')" class="w-24 border-2 rounded-lg p-1.5 text-center font-black text-primary bg-white"></div>`).join('')}
+                                <div class="text-[10px] text-gray-400">تظهر في المقايسة (الصنايعي 2D والمقايسات) وتُحسب لوحدها. السعر صفر = لا يمكن إضافة البند للمقايسة.</div>
                             </div>
 
                             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 space-y-2.5">
