@@ -350,26 +350,28 @@
 
         // مصنعيات محدثة بأسعار السوق (القاهرة الكبرى، نوفمبر 2026)
         const DEFAULT_LABOR = {
-            ceiling_genish_m2: 120,
-            ceiling_tish_m2: 150,
-            ceiling_linear_m: 100,
-            wall_cladding_m2: 130,
+            ceiling_genish_m2: 100,
+            ceiling_tish_m2: 120,
+            ceiling_linear_m: 85,
+            wall_cladding_m2: 100,
             wall_w111_m2: 180,
             wall_w112_m2: 250,
-            cement_board_m2: 260,
+            cement_board_m2: 250,
             tiles_layin_m2: 100,
             tiles_clipin_m2: 165,
-            shadow_gap_m: 65,
-            shadow_led_m: 100,
+            shadow_gap_m: 20,
+            shadow_led_m: 40,
             corner_bead_m: 30,
-            end_bead_m: 30,
-            access_panel_pc: 275,
-            rockwool_m2: 35
+            end_bead_m: 15,
+            access_panel_pc: 300,
+            rockwool_m2: 40,
+            putty_m: 20
         };
 
         const DEFAULT_CONFIG = {
-            ceiling_margin_pct: 22,
-            systems_margin_pct: 22,
+            ceiling_margin_pct: 35,
+            systems_margin_pct: 35,
+            addon_margin_pct: 35,
             min_safe_margin_pct: 15,
             round_to: 5,
             shadow_flat_ratio: 1.00, // 1.00 م.ط لكل 1 م² مسطح (مماثل لحساب الزوايا المحيطية، مثال 4×4=16م² -> 16م شادو)
@@ -381,7 +383,8 @@
                 shadow_led_sell: 0,
                 shadow_led_flat_sell: 0,
                 corner_sell: 0,
-                end_bead_sell: 0
+                end_bead_sell: 0,
+                putty_sell: 0
             }
         };
 
@@ -521,7 +524,7 @@
             },
             // Helper: Shadow & Bead unit costs/sells
             addonUnit(ds, kind) {
-                const marginMult = 1 + (ds.config.ceiling_margin_pct / 100);
+                const marginMult = 1 + (Number(ds.config.addon_margin_pct ?? ds.config.ceiling_margin_pct) / 100);
                 const ov = ds.config.addon_overrides || {};
                 const puttyKg = this.priceOf(ds, 49) / 12.5;
                 const s25 = this.priceOf(ds, 57) / 1000;
@@ -559,6 +562,13 @@
                     const labLm = ds.labor.end_bead_m;
                     const costLm = matLm + labLm;
                     const sellLm = ov.end_bead_sell > 0 ? ov.end_bead_sell : this.roundUp(costLm * marginMult, ds.config.round_to);
+                    return { costLm, sellLm, matLm, labLm };
+                }
+                if (kind === 'putty') {
+                    const matLm = 0.15 * puttyKg + 5 * s25;
+                    const labLm = Number(ds.labor.putty_m) || 0;
+                    const costLm = matLm + labLm;
+                    const sellLm = ov.putty_sell > 0 ? ov.putty_sell : this.roundUp(costLm * marginMult, ds.config.round_to);
                     return { costLm, sellLm, matLm, labLm };
                 }
                 return { costLm: 0, sellLm: 0, costFlat: 0, sellFlat: 0 };
@@ -1419,6 +1429,7 @@
                                     <option value="cem_wall1_7_117">سيمنت بورد 12مم جي بورد (حائط 7سم وجه)</option>
                                     <option value="shadow_normal">شادو جاب عادي (م.ط)</option>
                                     <option value="shadow_led">شادو جاب ليد مضيء (م.ط)</option>
+                                    <option value="putty">معجون (م.ط)</option>
                                     <option value="ap_113">باب كشف 60×60 سم (قطعة)</option>
                                 </select>
                                 <div class="flex gap-2">
@@ -1526,6 +1537,9 @@
                 } else if (val === 'shadow_led') {
                     const shl = Engine.addonUnit(ds, 'shadowLed');
                     item = { label: 'شادو جاب ليد مضيء', unit: 'م.ط', qty, unitCost: shl.costLm, unitSell: shl.sellLm };
+                } else if (val === 'putty') {
+                    const pt = Engine.addonUnit(ds, 'putty');
+                    item = { label: 'معجون', unit: 'م.ط', qty, unitCost: pt.costLm, unitSell: pt.sellLm };
                 } else if (val === 'ap_113') {
                     const m = ds.materials.find(x=>x.id===113), cost = m.price + ds.labor.access_panel_pc, sell = Engine.roundUp(cost*(1+ds.config.systems_margin_pct/100), ds.config.round_to);
                     item = { label: 'باب كشف 60×60 سم', unit: 'قطعة', qty, unitCost: cost, unitSell: sell };
@@ -1883,11 +1897,12 @@
                     ['shadow_led_m', 'مصنعية شادو جاب ليد (ج/م.ط)'],
                     ['corner_bead_m', 'مصنعية كورنر بيد (ج/م.ط)'],
                     ['end_bead_m', 'مصنعية إند بيد (ج/م.ط)'],
+                    ['putty_m', 'مصنعية معجون (ج/م.ط)'],
                     ['access_panel_pc', 'مصنعية باب كشف (ج/قطعة)'],
                     ['rockwool_m2', 'مصنعية صوف صخري عزل صوتي (ج/م²)']
                 ];
 
-                const sh = Engine.addonUnit(ds, 'shadow'), shl = Engine.addonUnit(ds, 'shadowLed'), cb = Engine.addonUnit(ds, 'corner'), eb = Engine.addonUnit(ds, 'endBead');
+                const sh = Engine.addonUnit(ds, 'shadow'), shl = Engine.addonUnit(ds, 'shadowLed'), cb = Engine.addonUnit(ds, 'corner'), eb = Engine.addonUnit(ds, 'endBead'), pt = Engine.addonUnit(ds, 'putty');
                 const ov = ds.config.addon_overrides;
 
                 // Loss Guardrail
@@ -1926,6 +1941,7 @@
                                 <h3 class="font-black text-primaryDark border-b pb-2">نسب الربح ومعامل الشادو للمسطح</h3>
                                 <div class="flex justify-between items-center text-xs font-bold"><span>هامش ربح الأسقف (%)</span><input type="number" value="${store.config.ceiling_margin_pct}" onchange="store.config.ceiling_margin_pct=Number(this.value)||0; store.markDirty(); app.adminNavigate('labor')" class="w-20 border-2 rounded-lg p-1.5 text-center font-black text-primary"></div>
                                 <div class="flex justify-between items-center text-xs font-bold"><span>هامش الحوائط والأنظمة (%)</span><input type="number" value="${store.config.systems_margin_pct}" onchange="store.config.systems_margin_pct=Number(this.value)||0; store.markDirty(); app.adminNavigate('labor')" class="w-20 border-2 rounded-lg p-1.5 text-center font-black text-primary"></div>
+                                <div class="flex justify-between items-center text-xs font-bold"><span>هامش ربح الأزرار الإضافية (%)</span><input type="number" value="${store.config.addon_margin_pct ?? 35}" onchange="store.config.addon_margin_pct=Number(this.value)||0; store.markDirty(); app.adminNavigate('labor')" class="w-20 border-2 rounded-lg p-1.5 text-center font-black text-gold"></div>
                                 <div class="flex justify-between items-center text-xs font-bold">
                                     <div><span>معامل شادو المسطح (م.ط/م²)</span><div class="text-[10px] text-gray-400">مثال: 4×4م=1.00 | 3×3م=1.33</div></div>
                                     <input type="number" step="0.05" value="${store.config.shadow_flat_ratio}" onchange="store.config.shadow_flat_ratio=Math.max(0.5, Number(this.value)||1); store.markDirty(); app.adminNavigate('labor')" class="w-20 border-2 rounded-lg p-1.5 text-center font-black text-amber-700">
@@ -1941,7 +1957,8 @@
                                     ['شادو ليد (طولي)', 'م.ط', shl.matLm, shl.labLm, shl.costLm, shl.sellLm, ov.shadow_led_sell, 'shadow_led_sell'],
                                     ['شادو ليد (مسطح)', 'م²', shl.matFlat, shl.labFlat, shl.costFlat, shl.sellFlat, ov.shadow_led_flat_sell, 'shadow_led_flat_sell'],
                                     ['كورنر بيد', 'م.ط', cb.matLm, cb.labLm, cb.costLm, cb.sellLm, ov.corner_sell, 'corner_sell'],
-                                    ['إند بيد', 'م.ط', eb.matLm, eb.labLm, eb.costLm, eb.sellLm, ov.end_bead_sell, 'end_bead_sell']
+                                    ['إند بيد', 'م.ط', eb.matLm, eb.labLm, eb.costLm, eb.sellLm, ov.end_bead_sell, 'end_bead_sell'],
+                                    ['معجون', 'م.ط', pt.matLm, pt.labLm, pt.costLm, pt.sellLm, ov.putty_sell, 'putty_sell']
                                 ].map(([label, unit, mat, lab, cost, auto, ovVal, key]) => {
                                     const eff = ovVal > 0 ? ovVal : auto;
                                     return `<div class="bg-gray-50 rounded-xl p-2.5 border border-gray-100">
@@ -2006,7 +2023,8 @@
                     { name: 'شادو جاب ليد (م.ط)', unit:'م.ط', cost: Engine.addonUnit(ds,'shadowLed').costLm, sell: Engine.addonUnit(ds,'shadowLed').sellLm },
                     { name: 'شادو جاب ليد (مسطح)', unit:'م²', cost: Engine.addonUnit(ds,'shadowLed').costFlat, sell: Engine.addonUnit(ds,'shadowLed').sellFlat },
                     { name: 'كورنر بيد (م.ط)', unit:'م.ط', cost: Engine.addonUnit(ds,'corner').costLm, sell: Engine.addonUnit(ds,'corner').sellLm },
-                    { name: 'إند بيد (م.ط)', unit:'م.ط', cost: Engine.addonUnit(ds,'endBead').costLm, sell: Engine.addonUnit(ds,'endBead').sellLm }
+                    { name: 'إند بيد (م.ط)', unit:'م.ط', cost: Engine.addonUnit(ds,'endBead').costLm, sell: Engine.addonUnit(ds,'endBead').sellLm },
+                    { name: 'معجون (م.ط)', unit:'م.ط', cost: Engine.addonUnit(ds,'putty').costLm, sell: Engine.addonUnit(ds,'putty').sellLm }
                 ];
 
                 let bodyHtml = '';

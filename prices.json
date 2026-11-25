@@ -147,25 +147,26 @@
     "142": 100
   },
   "labor": {
-    "ceiling_genish_m2": 120,
-    "ceiling_tish_m2": 150,
-    "ceiling_linear_m": 100,
-    "wall_cladding_m2": 130,
+    "ceiling_genish_m2": 100,
+    "ceiling_tish_m2": 120,
+    "ceiling_linear_m": 85,
+    "wall_cladding_m2": 100,
     "wall_w111_m2": 180,
     "wall_w112_m2": 250,
-    "cement_board_m2": 260,
+    "cement_board_m2": 250,
     "tiles_layin_m2": 100,
     "tiles_clipin_m2": 165,
-    "shadow_gap_m": 65,
-    "shadow_led_m": 100,
+    "shadow_gap_m": 20,
+    "shadow_led_m": 40,
     "corner_bead_m": 30,
-    "end_bead_m": 30,
-    "access_panel_pc": 275,
-    "rockwool_m2": 35
+    "end_bead_m": 15,
+    "access_panel_pc": 300,
+    "rockwool_m2": 40,
+    "putty_m": 20
   },
   "config": {
-    "ceiling_margin_pct": 22,
-    "systems_margin_pct": 22,
+    "ceiling_margin_pct": 35,
+    "systems_margin_pct": 35,
     "min_safe_margin_pct": 15,
     "round_to": 5,
     "shadow_flat_ratio": 1,
@@ -177,7 +178,9 @@
       "shadow_led_sell": 0,
       "shadow_led_flat_sell": 0,
       "corner_sell": 0,
-      "end_bead_sell": 0
-    }
+      "end_bead_sell": 0,
+      "putty_sell": 0
+    },
+    "addon_margin_pct": 35
   }
 }
