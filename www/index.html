@@ -156,7 +156,7 @@
         // =====================================================================
         // 1. MASTER CATALOG (130 APPROVED ITEMS + 12 OPEN UNPRICED SLOTS)
         // =====================================================================
-        const STORAGE_VERSION = 'darkom_v5_market_2026';
+        const STORAGE_VERSION = 'darkom_v6_shadow150_2026';
         const APP_VERSION = '1.1.0';
         const REMOTE_CONFIG_URL = 'https://raw.githubusercontent.com/darkomegy-lab/darkom-app/main/prices.json';
         const BUSINESS_PHONE = '01025013991';
@@ -266,7 +266,7 @@
             {id:76, cat:"مسامير وتثبيت", name:"عصفورة L", unit:"قطعة", price:2.5},
             // شادو جاب وإكسسوارات (77-88)
             {id:77, cat:"شادو جاب وإكسسوارات", name:"شادو جاب صاج (700 جم)", unit:"عود 3م", price:85},
-            {id:78, cat:"شادو جاب وإكسسوارات", name:"شادو جاب عادي (360 جم)", unit:"عود 3م", price:130},
+            {id:78, cat:"شادو جاب وإكسسوارات", name:"شادو جاب عادي (360 جم)", unit:"عود 3م", price:150},
             {id:79, cat:"شادو جاب وإكسسوارات", name:"شادو جاب وسط (400 جم)", unit:"عود 3م", price:140},
             {id:80, cat:"شادو جاب وإكسسوارات", name:"شادو جاب محمل (450 جم)", unit:"عود 3م", price:160},
             {id:81, cat:"شادو جاب وإكسسوارات", name:"شادو جاب محمل ومختوم (500 جم)", unit:"عود 3م", price:172},
@@ -367,12 +367,12 @@
             default_shadow_id: 78,
             default_shadow_led_id: 83,
             addon_overrides: {
-                shadow_sell: 0,
-                shadow_flat_sell: 0,
+                shadow_sell: 145,
+                shadow_flat_sell: 145,
                 shadow_led_sell: 0,
                 shadow_led_flat_sell: 0,
-                corner_sell: 0,
-                end_bead_sell: 0
+                corner_sell: 50,
+                end_bead_sell: 50
             }
         };
 
