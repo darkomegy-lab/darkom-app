@@ -211,26 +211,26 @@
             {id:24, cat:"بلاط جبس", name:"بلاط كناوف ديكوراما 7 مم (60×60)", unit:"م²", price:135},
             {id:25, cat:"بلاط جبس", name:"بلاط كناوف 9 مم (60×60)", unit:"م²", price:160},
             {id:26, cat:"بلاط جبس", name:"بلاط كناوف 12 مم (60×60)", unit:"م²", price:165},
-            // صاج تجاري (27-45)
-            {id:27, cat:"صاج تجاري", name:"زاوية 0.3 / 0.33", unit:"عود 3م", price:20},
-            {id:28, cat:"صاج تجاري", name:"أوميجا 0.3 / 0.33", unit:"عود 3م", price:40},
-            {id:29, cat:"صاج تجاري", name:"سي 0.33", unit:"عود 3م", price:30},
-            {id:30, cat:"صاج تجاري", name:"زاوية 0.35", unit:"عود 3م", price:23},
-            {id:31, cat:"صاج تجاري", name:"أوميجا 0.35", unit:"عود 3م", price:46},
-            {id:32, cat:"صاج تجاري", name:"سي (ناعم سي) 0.35", unit:"عود 3م", price:35},
-            {id:33, cat:"صاج تجاري", name:"زاوية 0.40", unit:"عود 3م", price:26},
-            {id:34, cat:"صاج تجاري", name:"أوميجا 0.40", unit:"عود 3م", price:52},
-            {id:35, cat:"صاج تجاري", name:"سي (ناعم سي) 0.40", unit:"عود 3م", price:41},
-            {id:36, cat:"صاج تجاري", name:"خشن 5 سم (0.40)", unit:"عود 3م", price:75},
-            {id:37, cat:"صاج تجاري", name:"خشن 5 سم (0.35)", unit:"عود 3م", price:65},
-            {id:38, cat:"صاج تجاري", name:"ناعم 5 سم (0.40)", unit:"عود 3م", price:65},
-            {id:39, cat:"صاج تجاري", name:"ناعم 5 سم (0.35)", unit:"عود 3م", price:55},
-            {id:40, cat:"صاج تجاري", name:"خشن 7 سم (0.40)", unit:"عود 3م", price:85},
-            {id:41, cat:"صاج تجاري", name:"خشن 7 سم (0.35)", unit:"عود 3م", price:75},
-            {id:42, cat:"صاج تجاري", name:"ناعم 7 سم (0.40)", unit:"عود 3م", price:70},
-            {id:43, cat:"صاج تجاري", name:"ناعم 7 سم (0.35)", unit:"عود 3م", price:65},
-            {id:44, cat:"صاج تجاري", name:"خشن 10 سم (0.40)", unit:"عود 3م", price:115},
-            {id:45, cat:"صاج تجاري", name:"ناعم 10 سم (0.40)", unit:"عود 3م", price:105},
+            // صاج (27-45)
+            {id:27, cat:"صاج", name:"زاوية 0.3 / 0.33", unit:"عود 3م", price:20},
+            {id:28, cat:"صاج", name:"أوميجا 0.3 / 0.33", unit:"عود 3م", price:40},
+            {id:29, cat:"صاج", name:"سي 0.33", unit:"عود 3م", price:30},
+            {id:30, cat:"صاج", name:"زاوية 0.35", unit:"عود 3م", price:23},
+            {id:31, cat:"صاج", name:"أوميجا 0.35", unit:"عود 3م", price:46},
+            {id:32, cat:"صاج", name:"سي (ناعم سي) 0.35", unit:"عود 3م", price:35},
+            {id:33, cat:"صاج", name:"زاوية 0.40", unit:"عود 3م", price:26},
+            {id:34, cat:"صاج", name:"أوميجا 0.40", unit:"عود 3م", price:52},
+            {id:35, cat:"صاج", name:"سي (ناعم سي) 0.40", unit:"عود 3م", price:41},
+            {id:36, cat:"صاج", name:"خشن 5 سم (0.40)", unit:"عود 3م", price:75},
+            {id:37, cat:"صاج", name:"خشن 5 سم (0.35)", unit:"عود 3م", price:65},
+            {id:38, cat:"صاج", name:"ناعم 5 سم (0.40)", unit:"عود 3م", price:65},
+            {id:39, cat:"صاج", name:"ناعم 5 سم (0.35)", unit:"عود 3م", price:55},
+            {id:40, cat:"صاج", name:"خشن 7 سم (0.40)", unit:"عود 3م", price:85},
+            {id:41, cat:"صاج", name:"خشن 7 سم (0.35)", unit:"عود 3م", price:75},
+            {id:42, cat:"صاج", name:"ناعم 7 سم (0.40)", unit:"عود 3م", price:70},
+            {id:43, cat:"صاج", name:"ناعم 7 سم (0.35)", unit:"عود 3م", price:65},
+            {id:44, cat:"صاج", name:"خشن 10 سم (0.40)", unit:"عود 3م", price:115},
+            {id:45, cat:"صاج", name:"ناعم 10 سم (0.40)", unit:"عود 3م", price:105},
             // معجون وشريط (46-55)
             {id:46, cat:"معجون وشريط", name:"شريط ميتال (30 متر)", unit:"لفة 30م", price:105},
             {id:47, cat:"معجون وشريط", name:"شريط ميتال مثقب", unit:"لفة", price:110},
@@ -379,19 +379,19 @@
         const PACKAGES_DEF = [
             {
                 id: 'eco', name: 'الباقة العادية (الاقتصادية)', badge: 'الأوفر سعراً',
-                spec: 'صاج تجاري 0.35 مم + ألواح جيبورد 3م + تعليق جنش',
+                spec: 'صاج 0.35 مم + ألواح جيبورد 3م + تعليق جنش',
                 boardIds: { white: 5, green: 6, red: 7 },
                 angleId: 30, omegaId: 31, cId: 32, includes_tish: false, auto_beads: false
             },
             {
                 id: 'basic', name: 'الباقة الأساسية', badge: '',
-                spec: 'صاج تجاري 0.35 مم + ألواح كناوف 3م + تعليق جنش',
+                spec: 'صاج 0.35 مم + ألواح كناوف 3م + تعليق جنش',
                 boardIds: { white: 1, green: 2, red: 3 },
                 angleId: 30, omegaId: 31, cId: 32, includes_tish: false, auto_beads: false
             },
             {
                 id: 'standard', name: 'الباقة القياسية', badge: 'الأكثر طلباً',
-                spec: 'صاج تجاري 0.40 مم + ألواح كناوف 3م + تعليق جنش',
+                spec: 'صاج 0.40 مم + ألواح كناوف 3م + تعليق جنش',
                 boardIds: { white: 1, green: 2, red: 3 },
                 angleId: 33, omegaId: 34, cId: 35, includes_tish: false, auto_beads: false
             },
@@ -982,7 +982,7 @@
                 const s = this.wallSel; if (s.width === '10' && s.steel === 'c35') s.steel = 'c40';
                 const res = Engine.calcWall(ds, s);
                 const sysLabels = { cladding: 'تجليد وجه واحد', w111: 'قاطع وجهين (W111)', w112: 'قاطع دبل طبقتين (W112)' };
-                const steelLabels = { c35: 'تجاري 0.35 مم', c40: 'تجاري 0.40 مم', gm50: 'جولدن 0.50 مم', gm60: 'جولدن 0.60 مم' };
+                const steelLabels = { c35: 'صاج 0.35 مم', c40: 'صاج 0.40 مم', gm50: 'جولدن 0.50 مم', gm60: 'جولدن 0.60 مم' };
                 const brandLabels = { knauf: 'كناوف', gboard: 'جيبورد', osman: 'عثمان' };
                 const colorLabels = { white: 'أبيض', green: 'أخضر (رطوبة)', red: 'أحمر (حريق)' };
                 const waMsg = `استفسار عن سعر متر الحوائط: ${sysLabels[s.system]} | قطاع ${s.width} سم | صاج ${steelLabels[s.steel]} | ألواح ${brandLabels[s.brand]} ${colorLabels[s.color]}${s.rockwool ? ' + عزل صوف صخري' : ''}`;
@@ -1934,13 +1934,13 @@
                 const sec = this.adminPkgSection;
 
                 const wallsMatrix = [
-                    { w:'5', st:'c35', lbl:'حائط 5 سم — تجاري 0.35' },
-                    { w:'5', st:'c40', lbl:'حائط 5 سم — تجاري 0.40' },
+                    { w:'5', st:'c35', lbl:'حائط 5 سم — صاج 0.35' },
+                    { w:'5', st:'c40', lbl:'حائط 5 سم — صاج 0.40' },
                     { w:'5', st:'gm50', lbl:'حائط 5 سم — جولدن 0.50' },
-                    { w:'7', st:'c40', lbl:'حائط 7 سم — تجاري 0.40' },
+                    { w:'7', st:'c40', lbl:'حائط 7 سم — صاج 0.40' },
                     { w:'7', st:'gm50', lbl:'حائط 7 سم — جولدن 0.50' },
                     { w:'7', st:'gm60', lbl:'حائط 7 سم — جولدن 0.60' },
-                    { w:'10', st:'c40', lbl:'حائط 10 سم — تجاري 0.40' },
+                    { w:'10', st:'c40', lbl:'حائط 10 سم — صاج 0.40' },
                     { w:'10', st:'gm50', lbl:'حائط 10 سم — جولدن 0.50' },
                     { w:'10', st:'gm60', lbl:'حائط 10 سم — جولدن 0.60' }
                 ];
