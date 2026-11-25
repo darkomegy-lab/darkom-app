@@ -146,7 +146,7 @@
         // =====================================================================
         // 1. MASTER CATALOG (130 APPROVED ITEMS + 12 OPEN UNPRICED SLOTS)
         // =====================================================================
-        const STORAGE_VERSION = 'darkom_v4_pro';
+        const STORAGE_VERSION = 'darkom_v5_market_2026';
 
         const DEFAULT_MATERIALS = [
             // ألواح جبس (1-19)
@@ -305,22 +305,23 @@
             {id:142, cat:"نواقص (60×60 وعزل)", name:"طقم إكسسوار T-Grid جاهز (بديل مجمّع)", unit:"م²", price:0}
         ];
 
+        // مصنعيات محدثة بأسعار السوق (القاهرة الكبرى، نوفمبر 2026)
         const DEFAULT_LABOR = {
-            ceiling_genish_m2: 65,
-            ceiling_tish_m2: 80,
-            ceiling_linear_m: 65,
-            wall_cladding_m2: 70,
-            wall_w111_m2: 95,
-            wall_w112_m2: 135,
-            cement_board_m2: 140,
-            tiles_layin_m2: 55,
-            tiles_clipin_m2: 90,
-            shadow_gap_m: 35,
-            shadow_led_m: 50,
-            corner_bead_m: 15,
-            end_bead_m: 15,
-            access_panel_pc: 150,
-            rockwool_m2: 20
+            ceiling_genish_m2: 120,
+            ceiling_tish_m2: 150,
+            ceiling_linear_m: 100,
+            wall_cladding_m2: 130,
+            wall_w111_m2: 180,
+            wall_w112_m2: 250,
+            cement_board_m2: 260,
+            tiles_layin_m2: 100,
+            tiles_clipin_m2: 165,
+            shadow_gap_m: 65,
+            shadow_led_m: 100,
+            corner_bead_m: 30,
+            end_bead_m: 30,
+            access_panel_pc: 275,
+            rockwool_m2: 35
         };
 
         const DEFAULT_CONFIG = {
