@@ -164,8 +164,8 @@
         // =====================================================================
         // 1. MASTER CATALOG (130 APPROVED ITEMS + 12 OPEN UNPRICED SLOTS)
         // =====================================================================
-        const STORAGE_VERSION = 'darkom_v14_rev125_2026';
-        const APP_VERSION = '1.2.5';
+        const STORAGE_VERSION = 'darkom_v14_rev126_2026';
+        const APP_VERSION = '1.2.6';
         const REMOTE_CONFIG_URL = 'https://raw.githubusercontent.com/darkomegy-lab/darkom-app/main/prices.json';
         const BUSINESS_PHONE = '01025013991';
         const BUSINESS_PHONE_INTL = '201025013991';
@@ -1938,10 +1938,26 @@
                         const phone = doc.phone ? doc.phone.replace(/\D/g, '').replace(/^0/, '20') : BUSINESS_PHONE_INTL;
                         window.open('https://wa.me/' + phone + '?text=' + encodeURIComponent(text), '_blank');
                     } else if (act === 'print') {
-                        const w = window.open('', '_blank');
-                        if (!w) { say('المتصفح منع نافذة الطباعة'); return; }
-                        w.document.write('<html dir="rtl"><head><meta charset="UTF-8"><title>' + doc.no + '</title><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet"><style>body{margin:0}@page{size:A4;margin:0}</style></head><body>' + this.docHtml(doc).replace('src="icons/', 'src="' + location.origin + location.pathname.replace(/[^/]*$/, '') + 'icons/') + '<script>window.onload=function(){setTimeout(function(){window.print()},400)}<\/script></body></html>');
-                        w.document.close();
+                        const cap = window.Capacitor, native = !!(cap && cap.isNativePlatform && cap.isNativePlatform());
+                        const mobile = native || /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
+                        if (mobile) {
+                            // نافذة الطباعة بتتجاهلها WebView على الموبايل: نطلع ملف A4 PDF ونفتح شاشة الحفظ/المشاركة (فيها طباعة)
+                            say('جاري تجهيز ملف PDF للطباعة...');
+                            const blob = await this.docBlob(doc, 'pdf');
+                            const r = await this.deliverFile(blob, base + '.pdf', 'share');
+                            say(r === 'downloaded' ? 'تم تحميل الـPDF، افتحه واطبعه من تطبيق الملفات ✓' : 'تم ✓ اختر طباعة أو حفظ من القائمة');
+                        } else {
+                            const fr = document.createElement('iframe');
+                            fr.style.cssText = 'position:fixed;left:0;top:0;width:794px;height:1123px;opacity:0;pointer-events:none;border:0;z-index:-1';
+                            document.body.appendChild(fr);
+                            const d = fr.contentDocument; d.open();
+                            d.write('<!doctype html><html dir="rtl"><head><meta charset="UTF-8"><title>' + this.esc(doc.no) + '</title><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet"><style>@page{size:A4;margin:0}html,body{margin:0;padding:0;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}</style></head><body>' + this.docHtml(doc) + '</body></html>');
+                            d.close();
+                            await new Promise(r => setTimeout(r, 700));
+                            try { fr.contentWindow.focus(); fr.contentWindow.print(); say('تم فتح نافذة الطباعة'); }
+                            catch (e2) { const blob = await this.docBlob(doc, 'pdf'); await this.deliverFile(blob, base + '.pdf', 'download'); say('تم تحميل الـPDF للطباعة ✓'); }
+                            setTimeout(() => fr.remove(), 60000);
+                        }
                     }
                 } catch (e) {
                     if (e && (e.name === 'AbortError' || /cancel/i.test(String(e.message || e)))) { say(''); return; }
