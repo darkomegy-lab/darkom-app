@@ -162,7 +162,8 @@
         const BUSINESS_PHONE = '01025013991';
         const BUSINESS_PHONE_INTL = '201025013991';
         const MAPS_URL = 'https://maps.google.com/?q=' + encodeURIComponent('الحي السابع، الشيخ زايد، محافظة الجيزة');
-        const WARRANTY_YEARS = 5; // ⚠️ قيمة مؤقتة لحين تأكيد صاحب النشاط لمدة الضمان
+        const WARRANTY_YEARS = 1;
+        const WARRANTY_LABEL = WARRANTY_YEARS === 1 ? 'سنة واحدة' : String(WARRANTY_YEARS) + ' سنوات';
         const WORKING_HOURS = 'يومياً من 9 صباحاً حتى 10 مساءً';
         const SERVICE_AREAS = ['الشيخ زايد', '6 أكتوبر', 'حدائق الأهرام', 'المهندسين', 'التجمع الخامس', 'المعادي', 'مدينة نصر', 'كل القاهرة الكبرى والجيزة'];
         const SOCIAL_LINKS = { facebook: '', instagram: '', tiktok: '' }; // تُملأ عند توفر روابط صفحات النشاط
@@ -851,7 +852,7 @@
                             <div>
                                 <div class="flex flex-wrap gap-2 mb-2">
                                     <span class="inline-block bg-gold/20 text-gold text-xs font-bold px-3 py-1 rounded-full">أسعار شفافة بالمتر — توريد وتركيب</span>
-                                    <span class="inline-block bg-white/15 text-white text-xs font-bold px-3 py-1 rounded-full">🛡️ ضمان تنفيذ ${WARRANTY_YEARS} سنوات</span>
+                                    <span class="inline-block bg-white/15 text-white text-xs font-bold px-3 py-1 rounded-full">🛡️ ضمان تنفيذ ${WARRANTY_LABEL}</span>
                                 </div>
                                 <h2 class="text-2xl md:text-3xl font-black mb-1">باقات الأسقف المعلقة الجبس بورد</h2>
                                 <p class="text-gray-200 text-sm">قارن بين الباقات الـ 5 بسعر المتر المسطح وسعر المتر الطولي (بيت النور)، وجرّب الترقية للأخضر والأحمر والشادو جاب وكورنر وإند بيد فوراً.</p>
@@ -1588,7 +1589,7 @@
                     <div class="total"><span>الإجمالي النهائي</span><span>${Math.round(total).toLocaleString()} ج.م</span></div>
                     <div class="foot">
                         الأسعار توريد وتركيب ومصنعية، غير شاملة الدهانات النهائية. العرض صالح 7 أيام من تاريخه.<br>
-                        ضمان تنفيذ ${WARRANTY_YEARS} سنوات ضد عيوب التركيب. للتأكيد أو الاستفسار: ${BUSINESS_PHONE} (واتساب / اتصال).<br>
+                        ضمان تنفيذ ${WARRANTY_LABEL} ضد عيوب التركيب. للتأكيد أو الاستفسار: ${BUSINESS_PHONE} (واتساب / اتصال).<br>
                         العنوان: الحي السابع، الشيخ زايد، محافظة الجيزة — ${WORKING_HOURS}.
                     </div>
                 <script>window.onload=()=>window.print();<\/script></body></html>`);
@@ -1680,7 +1681,7 @@
                     ['هل الأسعار المعروضة شاملة؟', 'أيوه، كل أسعار التطبيق توريد + تركيب + مصنعية بالمتر. غير شاملة الدهانات النهائية (النقاشة) فقط.'],
                     ['الفريق بيخلص شقة في قد إيه؟', 'الشقة المتوسطة (100-150 م²) بتاخد عادة من 3 لـ 7 أيام عمل حسب التصميم وعدد البنود.'],
                     ['إيه الفرق بين اللوح الأبيض والأخضر والأحمر؟', 'الأبيض للأماكن الجافة (غرف وريسبشن)، الأخضر مقاوم للرطوبة (حمامات ومطابخ)، الأحمر مقاوم للحريق (مطابخ ومداخل وأماكن تجارية).'],
-                    ['هل في ضمان على الشغل؟', `أيوه، ضمان تنفيذ ${WARRANTY_YEARS} سنوات ضد عيوب التركيب والهياكل.`],
+                    ['هل في ضمان على الشغل؟', `أيوه، ضمان تنفيذ ${WARRANTY_LABEL} ضد عيوب التركيب والهياكل المعدنية. الضمان على التركيب فقط ولا يشمل تلف الخامات من تسريب مياه أو سوء استخدام.`],
                     ['نظام الدفع إزاي؟', 'عربون جدية عند الاتفاق، والباقي على دفعات حسب تقدم الشغل. مفيش مقدم كبير.'],
                     ['المعاينة بفلوس؟', 'لا، المعاينة والمقايسة مجانية تماماً داخل مناطق الخدمة.'],
                     ['بتشتغلوا في أنهي مناطق؟', SERVICE_AREAS.join('، ') + '.'],
@@ -1737,7 +1738,7 @@
                 container.innerHTML = `
                     <div class="text-center mb-8">
                         <h2 class="text-3xl font-black text-primary mb-2">أعمالنا وخدماتنا</h2>
-                        <p class="text-gray-600 text-sm">التزام هندسي بالمواصفات المصرية ومواعيد التسليم في القاهرة الكبرى والجيزة — ضمان تنفيذ ${WARRANTY_YEARS} سنوات</p>
+                        <p class="text-gray-600 text-sm">التزام هندسي بالمواصفات المصرية ومواعيد التسليم في القاهرة الكبرى والجيزة — ضمان تنفيذ ${WARRANTY_LABEL}</p>
                     </div>
                     <div class="grid md:grid-cols-3 gap-6">
                         ${WORKS.map(item => `
@@ -1761,7 +1762,7 @@
                         </div>
                         <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
                             <h3 class="font-black text-primaryDark mb-3">🛡️ ضمان داركم</h3>
-                            <p class="text-sm text-gray-600 leading-relaxed mb-3">ضمان تنفيذ ${WARRANTY_YEARS} سنوات ضد عيوب التركيب والهياكل المعدنية، ومعاينة ومقايسة مجانية قبل أي التزام.</p>
+                            <p class="text-sm text-gray-600 leading-relaxed mb-3">ضمان تنفيذ ${WARRANTY_LABEL} ضد عيوب التركيب والهياكل المعدنية (على التركيب فقط، ولا يشمل تلف الخامات من تسريب مياه أو سوء استخدام)، ومعاينة ومقايسة مجانية قبل أي التزام.</p>
                             ${socials.length ? `<div class="flex gap-2 mt-2">${socials.map(([k, lbl, path]) => `<a href="${SOCIAL_LINKS[k]}" target="_blank" class="flex items-center gap-1.5 bg-gray-100 hover:bg-primary hover:text-white text-gray-700 text-xs font-bold px-3 py-2 rounded-lg transition"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="${path}"/></svg>${lbl}</a>`).join('')}</div>` : ''}
                         </div>
                     </div>
