@@ -1,6 +1,6 @@
 {
   "updated": "2026-11-25",
-  "app_version": "1.1.11",
+  "app_version": "1.1.12",
   "apk_url": "https://github.com/darkomegy-lab/darkom-app/releases/latest",
   "materials": {
     "1": 450,
@@ -183,7 +183,7 @@
       "magnetic_install_sell": 100,
       "magnetic_supply_sell": 0,
       "profile_open_sell": 40,
-      "magnetic_corner90_sell": 0
+      "magnetic_corner90_sell": 400
     },
     "addon_margin_pct": 15
   }
