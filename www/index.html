@@ -1682,14 +1682,17 @@
             // PUBLIC VIEW 4: PORTFOLIO
             // =================================================================
             renderPortfolio(container) {
-                // لإضافة صور حقيقية: ضع ملفات portfolio/work1.jpg حتى work6.jpg في مجلد www ثم حدّث التطبيق
+                // صور أعمال حقيقية من تنفيذ داركم - لإضافة/تغيير صورة: استبدل الملفات في مجلد portfolio
                 const WORKS = [
-                    { img: 'portfolio/work1.jpg', title: 'أسقف مستوية وبيت نور وشادو جاب', loc: 'الشيخ زايد / أكتوبر', desc: 'تنفيذ الباقة الاحترافية بصاج جولدن ميتال 0.60 مم وتيش معتمد مع كورنر وإند بيد وبروفايل ليد.' },
-                    { img: 'portfolio/work2.jpg', title: 'قواطع عزل صوتي W112 + صوف صخري', loc: 'التجمع الخامس / المعادي', desc: 'حوائط دبل طبقتين من كل وجه مع حشو صوف صخري للغرف الإدارية والعيادات.' },
-                    { img: 'portfolio/work3.jpg', title: 'حوائط وأسقف سيمنت بورد 5/7/10 سم', loc: 'المهندسين / حدائق الأهرام', desc: 'ألواح مقاومة للعوامل الجوية والرطوبة بقطاعات حوائط متعددة مع إمكانية العزل الصوتي.' },
-                    { img: 'portfolio/work4.jpg', title: 'بلاطات 60×60 للمحلات والمكاتب', loc: 'مدينة نصر / مصر الجديدة', desc: 'أسقف تعليق T-Grid وClip-in بتشطيب سريع ونظيف للأنشطة التجارية.' },
-                    { img: 'portfolio/work5.jpg', title: 'بيت نور وإضاءة مخفية للريسبشن', loc: 'الشيخ زايد', desc: 'شادو ليد وماجنتيك تراك بتوزيع إضاءة هندسي مدروس.' },
-                    { img: 'portfolio/work6.jpg', title: 'تجاليد حوائط وتلفزيونات', loc: 'أكتوبر / حدائق الأهرام', desc: 'تلبيس حوائط W111 بفواصل شادو جاب وتهيئة كاملة للدهان.' }
+                    { img: 'portfolio/work1.jpg', title: 'أسقف ريسبشن بإضاءة خطية وشادو جاب', tag: 'شادو ليد + خطوط إضاءة', desc: 'تصميم هندسي بخطوط ليد مستقيمة وفواصل شادو جاب مع سبوتات موزعة.' },
+                    { img: 'portfolio/work2.jpg', title: 'بيت نور وشادو ليد محيطي', tag: 'بيت نور + إضاءة مخفية', desc: 'ريسبشن واسع ببيت نور محيطي وإضاءة مخفية دافية مع ماجنتيك تراك.' },
+                    { img: 'portfolio/work3.jpg', title: 'تجاليد حوائط وتلفزيونات', tag: 'تجاليد + بديل خشب', desc: 'حائط تلفزيون بتلبيس جبس بورد وبديل الخشب وإضاءة موجهة.' },
+                    { img: 'portfolio/work4.jpg', title: 'أسقف مطابخ أمريكاني', tag: 'إضاءة مخفية', desc: 'سقف منحني بإضاءة مخفية ووحدات معلقة فوق جزيرة المطبخ.' },
+                    { img: 'portfolio/work5.jpg', title: 'سقف متعدد المستويات', tag: 'مستويات + شادو محيطي', desc: 'مستويات متدرجة بفواصل شادو محيطية ووحدات سبوت مربعة.' },
+                    { img: 'portfolio/work6.jpg', title: 'توزيع هندسي سبوتات وخطوط ليد', tag: 'سبوتات + ليد خطي', desc: 'سقف مستوي بخطوط ليد متوازية وسبوتات موزعة بشكل هندسي منتظم.' },
+                    { img: 'portfolio/work7.jpg', title: 'أسقف غرف نوم بإضاءة محيطية', tag: 'شادو محيطي', desc: 'شادو محيطي دافئ حول الغرفة مع إطار ليد مركزي.' },
+                    { img: 'portfolio/work8.jpg', title: 'أسقف مودرن مع وحدات إضاءة', tag: 'مودرن', desc: 'إطار ليد هندسي مع سبوتات داخلية وتجهيز للنجف المودرن.' },
+                    { img: 'portfolio/work9.jpg', title: 'إطارات ليد هندسية للأسقف', tag: 'إطار ليد', desc: 'إطار ليد مضيء يحدد السقف مع سبوتات خطية موزعة.' }
                 ];
                 const socials = [
                     ['facebook', 'فيسبوك', 'M13.5 9H16l.5-3h-3V4.5c0-.9.3-1.5 1.6-1.5H16.6V.2C16.3.2 15.3 0 14.1 0 11.6 0 10 1.5 10 4.2V6H7v3h3v9h3.5V9z'],
@@ -1706,7 +1709,7 @@
                             <div class="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
                                 <div class="h-44 relative bg-gradient-to-br from-primaryDark to-primary flex flex-col items-center justify-center text-gold p-4 text-center">
                                     <span class="text-3xl mb-1">🏗️</span>
-                                    <span class="text-xs font-bold bg-black/25 px-3 py-1 rounded-full">${item.loc}</span>
+                                    <span class="text-xs font-bold bg-black/25 px-3 py-1 rounded-full">${item.tag}</span>
                                     <img src="${item.img}" alt="${item.title}" loading="lazy" class="absolute inset-0 w-full h-full object-cover" onerror="this.remove()">
                                 </div>
                                 <div class="p-5"><h3 class="font-black text-primaryDark mb-2">${item.title}</h3><p class="text-xs text-gray-600 leading-relaxed">${item.desc}</p></div>
