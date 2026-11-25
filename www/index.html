@@ -528,28 +528,38 @@
                 const ratio = Number(ds.config.shadow_flat_ratio) || 1.00;
 
                 if (kind === 'shadow') {
-                    const costLm = (this.priceOf(ds, ds.config.default_shadow_id) * 1.08) / 3 + ds.labor.shadow_gap_m;
+                    const matLm = (this.priceOf(ds, ds.config.default_shadow_id) * 1.08) / 3;
+                    const labLm = ds.labor.shadow_gap_m;
+                    const costLm = matLm + labLm;
                     const sellLm = ov.shadow_sell > 0 ? ov.shadow_sell : this.roundUp(costLm * marginMult, ds.config.round_to);
+                    const matFlat = matLm * ratio, labFlat = labLm * ratio;
                     const costFlat = costLm * ratio;
                     const sellFlat = ov.shadow_flat_sell > 0 ? ov.shadow_flat_sell : this.roundUp(costFlat * marginMult, ds.config.round_to);
-                    return { costLm, sellLm, costFlat, sellFlat, ratio };
+                    return { costLm, sellLm, costFlat, sellFlat, ratio, matLm, labLm, matFlat, labFlat };
                 }
                 if (kind === 'shadowLed') {
-                    const costLm = (this.priceOf(ds, ds.config.default_shadow_led_id) * 1.08) / 3 + ds.labor.shadow_led_m;
+                    const matLm = (this.priceOf(ds, ds.config.default_shadow_led_id) * 1.08) / 3;
+                    const labLm = ds.labor.shadow_led_m;
+                    const costLm = matLm + labLm;
                     const sellLm = ov.shadow_led_sell > 0 ? ov.shadow_led_sell : this.roundUp(costLm * marginMult, ds.config.round_to);
+                    const matFlat = matLm * ratio, labFlat = labLm * ratio;
                     const costFlat = costLm * ratio;
                     const sellFlat = ov.shadow_led_flat_sell > 0 ? ov.shadow_led_flat_sell : this.roundUp(costFlat * marginMult, ds.config.round_to);
-                    return { costLm, sellLm, costFlat, sellFlat, ratio };
+                    return { costLm, sellLm, costFlat, sellFlat, ratio, matLm, labLm, matFlat, labFlat };
                 }
                 if (kind === 'corner') {
-                    const costLm = (this.priceOf(ds, 85) * 1.08) / 3 + 0.15 * puttyKg + 5 * s25 + ds.labor.corner_bead_m;
+                    const matLm = (this.priceOf(ds, 85) * 1.08) / 3 + 0.15 * puttyKg + 5 * s25;
+                    const labLm = ds.labor.corner_bead_m;
+                    const costLm = matLm + labLm;
                     const sellLm = ov.corner_sell > 0 ? ov.corner_sell : this.roundUp(costLm * marginMult, ds.config.round_to);
-                    return { costLm, sellLm };
+                    return { costLm, sellLm, matLm, labLm };
                 }
                 if (kind === 'endBead') {
-                    const costLm = (this.priceOf(ds, 86) * 1.08) / 3 + 0.15 * puttyKg + 5 * s25 + ds.labor.end_bead_m;
+                    const matLm = (this.priceOf(ds, 86) * 1.08) / 3 + 0.15 * puttyKg + 5 * s25;
+                    const labLm = ds.labor.end_bead_m;
+                    const costLm = matLm + labLm;
                     const sellLm = ov.end_bead_sell > 0 ? ov.end_bead_sell : this.roundUp(costLm * marginMult, ds.config.round_to);
-                    return { costLm, sellLm };
+                    return { costLm, sellLm, matLm, labLm };
                 }
                 return { costLm: 0, sellLm: 0, costFlat: 0, sellFlat: 0 };
             },
@@ -1924,13 +1934,22 @@
                             </div>
 
                             <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 space-y-2.5">
-                                <h3 class="font-black text-primaryDark border-b pb-1">سعر بيع الأزرار الإضافية (0 = تلقائي)</h3>
-                                <div class="flex justify-between items-center text-xs"><div><strong>شادو عادي (طولي)</strong><div class="text-[10px] text-gray-500">تكلفة: ${sh.costLm.toFixed(1)} | تلقائي: ${sh.sellLm} ج</div></div><input type="number" value="${ov.shadow_sell}" onchange="store.config.addon_overrides.shadow_sell=Number(this.value)||0; store.markDirty(); app.adminNavigate('labor')" class="w-20 border-2 rounded-lg p-1 text-center font-black"></div>
-                                <div class="flex justify-between items-center text-xs"><div><strong>شادو عادي (مسطح)</strong><div class="text-[10px] text-gray-500">تكلفة: ${sh.costFlat.toFixed(1)} | تلقائي: ${sh.sellFlat} ج</div></div><input type="number" value="${ov.shadow_flat_sell}" onchange="store.config.addon_overrides.shadow_flat_sell=Number(this.value)||0; store.markDirty(); app.adminNavigate('labor')" class="w-20 border-2 rounded-lg p-1 text-center font-black"></div>
-                                <div class="flex justify-between items-center text-xs"><div><strong>شادو ليد (طولي)</strong><div class="text-[10px] text-gray-500">تكلفة: ${shl.costLm.toFixed(1)} | تلقائي: ${shl.sellLm} ج</div></div><input type="number" value="${ov.shadow_led_sell}" onchange="store.config.addon_overrides.shadow_led_sell=Number(this.value)||0; store.markDirty(); app.adminNavigate('labor')" class="w-20 border-2 rounded-lg p-1 text-center font-black"></div>
-                                <div class="flex justify-between items-center text-xs"><div><strong>شادو ليد (مسطح)</strong><div class="text-[10px] text-gray-500">تكلفة: ${shl.costFlat.toFixed(1)} | تلقائي: ${shl.sellFlat} ج</div></div><input type="number" value="${ov.shadow_led_flat_sell}" onchange="store.config.addon_overrides.shadow_led_flat_sell=Number(this.value)||0; store.markDirty(); app.adminNavigate('labor')" class="w-20 border-2 rounded-lg p-1 text-center font-black"></div>
-                                <div class="flex justify-between items-center text-xs"><div><strong>كورنر بيد (م.ط)</strong><div class="text-[10px] text-gray-500">تكلفة: ${cb.costLm.toFixed(1)} | تلقائي: ${cb.sellLm} ج</div></div><input type="number" value="${ov.corner_sell}" onchange="store.config.addon_overrides.corner_sell=Number(this.value)||0; store.markDirty(); app.adminNavigate('labor')" class="w-20 border-2 rounded-lg p-1 text-center font-black"></div>
-                                <div class="flex justify-between items-center text-xs"><div><strong>إند بيد (م.ط)</strong><div class="text-[10px] text-gray-500">تكلفة: ${eb.costLm.toFixed(1)} | تلقائي: ${eb.sellLm} ج</div></div><input type="number" value="${ov.end_bead_sell}" onchange="store.config.addon_overrides.end_bead_sell=Number(this.value)||0; store.markDirty(); app.adminNavigate('labor')" class="w-20 border-2 rounded-lg p-1 text-center font-black"></div>
+                                <h3 class="font-black text-primaryDark border-b pb-1">سعر بيع الأزرار الإضافية (تلقائي: خامة + مصنعية + ربح)</h3>
+                                ${[
+                                    ['شادو عادي (طولي)', 'م.ط', sh.matLm, sh.labLm, sh.costLm, sh.sellLm, ov.shadow_sell, 'shadow_sell'],
+                                    ['شادو عادي (مسطح)', 'م²', sh.matFlat, sh.labFlat, sh.costFlat, sh.sellFlat, ov.shadow_flat_sell, 'shadow_flat_sell'],
+                                    ['شادو ليد (طولي)', 'م.ط', shl.matLm, shl.labLm, shl.costLm, shl.sellLm, ov.shadow_led_sell, 'shadow_led_sell'],
+                                    ['شادو ليد (مسطح)', 'م²', shl.matFlat, shl.labFlat, shl.costFlat, shl.sellFlat, ov.shadow_led_flat_sell, 'shadow_led_flat_sell'],
+                                    ['كورنر بيد', 'م.ط', cb.matLm, cb.labLm, cb.costLm, cb.sellLm, ov.corner_sell, 'corner_sell'],
+                                    ['إند بيد', 'م.ط', eb.matLm, eb.labLm, eb.costLm, eb.sellLm, ov.end_bead_sell, 'end_bead_sell']
+                                ].map(([label, unit, mat, lab, cost, auto, ovVal, key]) => {
+                                    const eff = ovVal > 0 ? ovVal : auto;
+                                    return `<div class="bg-gray-50 rounded-xl p-2.5 border border-gray-100">
+                                        <div class="flex justify-between items-center text-xs"><strong>${label}</strong><span class="font-black text-primary">${eff} ج/${unit}</span></div>
+                                        <div class="text-[10px] text-gray-500 mt-0.5">خامة ${mat.toFixed(1)} + مصنعية ${lab.toFixed(1)} + ربح ${(auto - cost).toFixed(1)} = <span class="font-bold text-gray-700">${auto} ج تلقائي</span>${ovVal > 0 ? ` <span class="text-amber-600 font-bold">(مثبت يدويًا: ${ovVal} ج)</span>` : ''}</div>
+                                        <div class="flex justify-between items-center mt-1"><span class="text-[10px] text-gray-400">تثبيت يدوي (اتركه فارغًا = تلقائي)</span><input type="number" value="${ovVal || ''}" placeholder="${auto}" onchange="store.config.addon_overrides.${key}=Number(this.value)||0; store.markDirty(); app.adminNavigate('labor')" class="w-20 border-2 rounded-lg p-1 text-center font-black bg-white"></div>
+                                    </div>`;
+                                }).join('')}
                             </div>
                         </div>
                     </div>`;
