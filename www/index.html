@@ -156,8 +156,8 @@
         // =====================================================================
         // 1. MASTER CATALOG (130 APPROVED ITEMS + 12 OPEN UNPRICED SLOTS)
         // =====================================================================
-        const STORAGE_VERSION = 'darkom_v6_shadow150_2026';
-        const APP_VERSION = '1.1.5';
+        const STORAGE_VERSION = 'darkom_v7_rev116_2026';
+        const APP_VERSION = '1.1.6';
         const REMOTE_CONFIG_URL = 'https://raw.githubusercontent.com/darkomegy-lab/darkom-app/main/prices.json';
         const BUSINESS_PHONE = '01025013991';
         const BUSINESS_PHONE_INTL = '201025013991';
@@ -176,7 +176,7 @@
             const rc = await r.json();
             if (rc.materials) DEFAULT_MATERIALS.forEach(m => { const p = rc.materials[m.id]; if (p != null && !isNaN(Number(p))) m.price = Number(p); });
             if (rc.labor) Object.keys(DEFAULT_LABOR).forEach(k => { if (rc.labor[k] != null && !isNaN(Number(rc.labor[k]))) DEFAULT_LABOR[k] = Number(rc.labor[k]); });
-            if (rc.config) Object.assign(DEFAULT_CONFIG, rc.config);
+            if (rc.config) { const ao = { ...DEFAULT_CONFIG.addon_overrides, ...(rc.config.addon_overrides || {}) }; Object.assign(DEFAULT_CONFIG, rc.config, { addon_overrides: ao }); }
             if (rc.app_version) {
                 // مقارنة رقمية صحيحة للإصدارات (1.1.10 > 1.1.2)
                 const parseV = v => String(v).split('.').map(n => parseInt(n, 10) || 0);
@@ -352,7 +352,7 @@
         // مصنعيات محدثة بأسعار السوق (القاهرة الكبرى، نوفمبر 2026)
         const DEFAULT_LABOR = {
             ceiling_genish_m2: 100,
-            ceiling_tish_m2: 120,
+            ceiling_tish_m2: 110,
             ceiling_linear_m: 85,
             wall_cladding_m2: 100,
             wall_w111_m2: 180,

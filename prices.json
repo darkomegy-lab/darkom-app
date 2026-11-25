@@ -1,6 +1,6 @@
 {
   "updated": "2026-11-25",
-  "app_version": "1.1.5",
+  "app_version": "1.1.6",
   "apk_url": "https://github.com/darkomegy-lab/darkom-app/releases/latest",
   "materials": {
     "1": 450,
@@ -148,7 +148,7 @@
   },
   "labor": {
     "ceiling_genish_m2": 100,
-    "ceiling_tish_m2": 120,
+    "ceiling_tish_m2": 110,
     "ceiling_linear_m": 85,
     "wall_cladding_m2": 100,
     "wall_w111_m2": 180,
@@ -165,7 +165,7 @@
     "putty_m": 20
   },
   "config": {
-    "ceiling_margin_pct": 35,
+    "ceiling_margin_pct": 30,
     "systems_margin_pct": 35,
     "min_safe_margin_pct": 15,
     "round_to": 5,
@@ -179,7 +179,10 @@
       "shadow_led_flat_sell": 0,
       "corner_sell": 0,
       "end_bead_sell": 0,
-      "putty_sell": 0
+      "putty_sell": 0,
+      "magnetic_install_sell": 100,
+      "magnetic_supply_sell": 0,
+      "profile_open_sell": 40
     },
     "addon_margin_pct": 35
   }
