@@ -384,13 +384,13 @@
                 angleId: 30, omegaId: 31, cId: 32, includes_tish: false, auto_beads: false
             },
             {
-                id: 'basic', name: 'الباقة الأساسية', badge: 'الأكثر طلباً للشقق',
+                id: 'basic', name: 'الباقة الأساسية', badge: '',
                 spec: 'صاج تجاري 0.35 مم + ألواح كناوف 3م + تعليق جنش',
                 boardIds: { white: 1, green: 2, red: 3 },
                 angleId: 30, omegaId: 31, cId: 32, includes_tish: false, auto_beads: false
             },
             {
-                id: 'standard', name: 'الباقة القياسية (المتوسطة)', badge: 'توازن مثالي',
+                id: 'standard', name: 'الباقة القياسية', badge: 'الأكثر طلباً',
                 spec: 'صاج تجاري 0.40 مم + ألواح كناوف 3م + تعليق جنش',
                 boardIds: { white: 1, green: 2, red: 3 },
                 angleId: 33, omegaId: 34, cId: 35, includes_tish: false, auto_beads: false
@@ -891,7 +891,7 @@
                             <div>
                                 <div class="flex justify-between items-start gap-2 mb-2">
                                     <div>
-                                        <span class="text-[11px] font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">${pkg.badge}</span>
+                                        ${pkg.badge ? `<span class="text-[11px] font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">${pkg.badge}</span>` : ''}
                                         <h3 class="text-lg font-black text-primaryDark mt-1.5">${pkg.name}</h3>
                                     </div>
                                     <span class="${colorInfo.cls} text-[11px] font-bold px-2.5 py-1 rounded-lg whitespace-nowrap">${colorInfo.label}</span>
