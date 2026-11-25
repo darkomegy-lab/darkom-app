@@ -164,8 +164,8 @@
         // =====================================================================
         // 1. MASTER CATALOG (130 APPROVED ITEMS + 12 OPEN UNPRICED SLOTS)
         // =====================================================================
-        const STORAGE_VERSION = 'darkom_v14_rev124_2026';
-        const APP_VERSION = '1.2.4';
+        const STORAGE_VERSION = 'darkom_v14_rev125_2026';
+        const APP_VERSION = '1.2.5';
         const REMOTE_CONFIG_URL = 'https://raw.githubusercontent.com/darkomegy-lab/darkom-app/main/prices.json';
         const BUSINESS_PHONE = '01025013991';
         const BUSINESS_PHONE_INTL = '201025013991';
@@ -1840,7 +1840,7 @@
             async renderDocCanvas(doc, scale) {
                 if (typeof html2canvas === 'undefined') throw new Error('مكتبة التصدير غير محملة');
                 const host = document.createElement('div');
-                host.id = 'doc-export-host'; host.style.cssText = 'position:absolute;left:0;top:0;width:794px;background:#fff;z-index:-1;visibility:hidden;pointer-events:none';
+                host.id = 'doc-export-host'; host.style.cssText = 'position:fixed;left:0;top:0;width:794px;background:#fff;z-index:-1;pointer-events:none;opacity:0';
                 host.innerHTML = this.docHtml(doc);
                 document.body.appendChild(host);
                 try {
@@ -1848,11 +1848,11 @@
                     const imgs = Array.from(host.querySelectorAll('img'));
                     await Promise.all(imgs.map(im => im.complete ? 1 : new Promise(r => { im.onload = im.onerror = r; })));
                     await new Promise(r => setTimeout(r, 200));
-                    const el = host.firstElementChild, W = 794, H = Math.max(el.scrollHeight, el.offsetHeight, 1123);
+                    const el = host.firstElementChild, W = 794; el.style.minHeight = '0'; const H = Math.max(el.scrollHeight, el.offsetHeight, 300);
                     return await html2canvas(el, {
                         scale: scale || 2, backgroundColor: '#ffffff', useCORS: true, logging: false,
                         width: W, height: H, windowWidth: W, windowHeight: H, x: 0, y: 0, scrollX: 0, scrollY: 0,
-                        onclone: (d) => { const h = d.getElementById('doc-export-host'); if (h) { h.style.cssText = 'position:absolute;left:0;top:0;width:794px;background:#fff;visibility:visible'; } }
+                        onclone: (d) => { const h = d.getElementById('doc-export-host'); if (h) { h.style.cssText = 'position:absolute;left:0;top:0;width:794px;background:#fff;opacity:1'; } }
                     });
                 } finally { host.remove(); }
             },
@@ -1868,7 +1868,10 @@
                 }
                 const jsPDFc = window.jspdf && window.jspdf.jsPDF;
                 if (!jsPDFc) throw new Error('مكتبة PDF غير محملة');
-                const pdf = new jsPDFc({ unit: 'pt', format: 'a4', compress: true });
+                const A4W = 595.28, A4H = 841.89;
+                // صفحة واحدة بطول المحتوى لو أقصر من A4، وإلا صفحات A4 عادية
+                const oneH = c.height * A4W / c.width;
+                const pdf = new jsPDFc(oneH <= A4H ? { unit: 'pt', format: [A4W, Math.max(oneH, 200)], compress: true } : { unit: 'pt', format: 'a4', compress: true });
                 const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight();
                 const pageH = Math.floor(c.width * ph / pw);
                 let y = 0, first = true;
