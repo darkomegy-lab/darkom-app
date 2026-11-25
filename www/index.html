@@ -157,7 +157,7 @@
         // 1. MASTER CATALOG (130 APPROVED ITEMS + 12 OPEN UNPRICED SLOTS)
         // =====================================================================
         const STORAGE_VERSION = 'darkom_v6_shadow150_2026';
-        const APP_VERSION = '1.1.2';
+        const APP_VERSION = '1.1.3';
         const REMOTE_CONFIG_URL = 'https://raw.githubusercontent.com/darkomegy-lab/darkom-app/main/prices.json';
         const BUSINESS_PHONE = '01025013991';
         const BUSINESS_PHONE_INTL = '201025013991';
@@ -385,7 +385,10 @@
                 shadow_led_flat_sell: 0,
                 corner_sell: 0,
                 end_bead_sell: 0,
-                putty_sell: 0
+                putty_sell: 0,
+                magnetic_install_sell: 100, // تركيب مجناتيك ج/م.ط (قرار المالك)
+                magnetic_supply_sell: 0,    // مجناتيك توريد وتركيب ج/م.ط (السعر لم يحدد بعد)
+                profile_open_sell: 40       // تفتيح بروفايل ج/م.ط (قرار المالك)
             }
         };
 
@@ -646,6 +649,13 @@
                     coveSell += eb.sellLm;
                 }
 
+                // 5) Magnetic track / profile opening: fixed sell per linear meter (cove only)
+                const ovx = ds.config.addon_overrides || {};
+                const addFixed = (v) => { v = Number(v) || 0; coveCost += v; coveSell += v; };
+                if (addons.magneticInstall) addFixed(ovx.magnetic_install_sell ?? 100);
+                if (addons.magneticSupply) addFixed(ovx.magnetic_supply_sell ?? 0);
+                if (addons.profileOpen) addFixed(ovx.profile_open_sell ?? 40);
+
                 return {
                     missing: false,
                     flatMat: baseFlatMat, flatLabor: baseFlatLabor, flatCost, flatPrice: flatSell,
@@ -773,11 +783,11 @@
             currentPackageColor: 'white',
             // Premium & Pro have Corner Bead & End Bead AUTOMATICALLY PRE-ACTIVATED!
             packageAddons: {
-                eco:      { tish: false, shadow: false, shadowLed: false, corner: false, endBead: false },
-                basic:    { tish: false, shadow: false, shadowLed: false, corner: false, endBead: false },
-                standard: { tish: false, shadow: false, shadowLed: false, corner: false, endBead: false },
-                premium:  { tish: false, shadow: false, shadowLed: false, corner: true,  endBead: true  },
-                pro:      { tish: false, shadow: false, shadowLed: false, corner: true,  endBead: true  }
+                eco:      { tish: false, shadow: false, shadowLed: false, magneticInstall: false, magneticSupply: false, profileOpen: false, corner: false, endBead: false },
+                basic:    { tish: false, shadow: false, shadowLed: false, magneticInstall: false, magneticSupply: false, profileOpen: false, corner: false, endBead: false },
+                standard: { tish: false, shadow: false, shadowLed: false, magneticInstall: false, magneticSupply: false, profileOpen: false, corner: false, endBead: false },
+                premium:  { tish: false, shadow: false, shadowLed: false, magneticInstall: false, magneticSupply: false, profileOpen: false, corner: true,  endBead: true  },
+                pro:      { tish: false, shadow: false, shadowLed: false, magneticInstall: false, magneticSupply: false, profileOpen: false, corner: true,  endBead: true  }
             },
             pricesTab: 'walls',
             wallSel: { system: 'w111', width: '7', steel: 'c40', brand: 'knauf', color: 'white', rockwool: false },
@@ -889,6 +899,8 @@
                 const cur = this.packageAddons[pkgId];
                 if (key === 'shadow' && !cur.shadow) cur.shadowLed = false;
                 if (key === 'shadowLed' && !cur.shadowLed) cur.shadow = false;
+                if (key === 'magneticInstall' && !cur.magneticInstall) cur.magneticSupply = false;
+                if (key === 'magneticSupply' && !cur.magneticSupply) cur.magneticInstall = false;
                 cur[key] = !cur[key];
                 this.renderPackagesCards(store.getDataset(false));
             },
@@ -915,6 +927,9 @@
                     if (addons.shadowLed) activeNames.push('شادو ليد مضيء');
                     if (addons.corner) activeNames.push('كورنر بيد');
                     if (addons.endBead) activeNames.push('إند بيد');
+                    if (addons.magneticInstall) activeNames.push('تركيب مجناتيك (100 ج/م.ط)');
+                    if (addons.magneticSupply) activeNames.push('مجناتيك توريد وتركيب (بالمتر)');
+                    if (addons.profileOpen) activeNames.push('تفتيح بروفايل (40 ج/م.ط)');
 
                     const waText = `مرحباً داركم، أستفسر عن ${pkg.name} (ألواح: ${colorInfo.label})${activeNames.length ? ' + إضافات: ' + activeNames.join('، ') : ''} — مسطح ${res.flatPrice} ج/م² | طولي ${res.covePrice} ج/م.ط`;
 
@@ -946,7 +961,7 @@
                                         <div>
                                             <div class="text-xs font-bold text-gray-700">سعر المتر الطولي (بيت النور)</div>
                                             ${coveColorDelta > 0 ? `<div class="text-[10px] text-green-700 font-bold">يشمل فرق اللون (+${coveColorDelta} ج/م.ط)</div>` : ''}
-                                            ${(addons.shadow || addons.shadowLed || addons.corner || addons.endBead) ? `<div class="text-[10px] text-primary font-bold">شامل الإضافات المفعّلة</div>` : ''}
+                                            ${(addons.shadow || addons.shadowLed || addons.corner || addons.endBead || addons.magneticInstall || addons.magneticSupply || addons.profileOpen) ? `<div class="text-[10px] text-primary font-bold">شامل الإضافات المفعّلة</div>` : ''}
                                         </div>
                                         <div class="text-left">
                                             ${res.missing ? `<span class="text-xs text-gray-400">—</span>` : `<span class="text-xl font-black text-primaryDark">${res.covePrice}</span> <span class="text-xs font-bold text-gray-500">ج.م / م.ط</span>`}
@@ -972,6 +987,11 @@
                                         <button onclick="app.toggleAddon('${pkg.id}','corner')" class="py-2 px-1 rounded-xl border-2 text-[11px] font-bold transition ${addons.corner?'border-primary bg-primary text-white shadow-sm':'border-gray-200 text-gray-600 hover:border-primary'}">${addons.corner?'✓ ':''}كورنر بيد${pkg.auto_beads && addons.corner ? ' (مفعّل)' : ''}</button>
                                         <button onclick="app.toggleAddon('${pkg.id}','endBead')" class="py-2 px-1 rounded-xl border-2 text-[11px] font-bold transition ${addons.endBead?'border-primary bg-primary text-white shadow-sm':'border-gray-200 text-gray-600 hover:border-primary'}">${addons.endBead?'✓ ':''}إند بيد${pkg.auto_beads && addons.endBead ? ' (مفعّل)' : ''}</button>
                                     </div>
+                                    <div class="grid grid-cols-2 gap-1.5">
+                                        <button onclick="app.toggleAddon('${pkg.id}','magneticInstall')" class="py-2 px-1 rounded-xl border-2 text-[11px] font-bold transition ${addons.magneticInstall?'border-gold bg-gold text-primaryDark shadow-sm':'border-gray-200 text-gray-600 hover:border-gold'}">${addons.magneticInstall?'✓ ':''}تركيب مجناتيك (+100 ج/م)</button>
+                                        <button onclick="app.toggleAddon('${pkg.id}','magneticSupply')" class="py-2 px-1 rounded-xl border-2 text-[11px] font-bold transition ${addons.magneticSupply?'border-gold bg-gold text-primaryDark shadow-sm':'border-gray-200 text-gray-600 hover:border-gold'}">${addons.magneticSupply?'✓ ':''}مجناتيك توريد وتركيب (بالمتر)</button>
+                                    </div>
+                                    <button onclick="app.toggleAddon('${pkg.id}','profileOpen')" class="w-full py-2 px-1 rounded-xl border-2 text-[11px] font-bold transition ${addons.profileOpen?'border-primary bg-primary text-white shadow-sm':'border-gray-200 text-gray-600 hover:border-primary'}">${addons.profileOpen?'✓ ':''}تفتيح بروفايل (+40 ج/م)</button>
                                 </div>
                             </div>
 
