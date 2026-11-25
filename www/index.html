@@ -72,6 +72,9 @@
             </div>
             <div class="flex items-center gap-2">
                 <button id="pwa-install-btn" onclick="app.installPWA()" class="hidden bg-gold text-primaryDark text-xs font-black px-3 py-1.5 rounded-lg shadow hover:bg-goldDark transition">📲 تثبيت التطبيق</button>
+                <a href="tel:+201025013991" class="hidden sm:flex items-center gap-1.5 bg-gold hover:bg-goldDark text-primaryDark text-xs font-black px-3 py-2 rounded-lg transition">
+                    <span>📞 اتصل بينا</span>
+                </a>
                 <a href="https://wa.me/201025013991" target="_blank" class="hidden sm:flex items-center gap-1.5 bg-green-600 hover:bg-green-700 text-white text-xs font-bold px-3 py-2 rounded-lg transition">
                     <span>01025013991</span>
                 </a>
@@ -91,6 +94,8 @@
             <button data-view="prices" onclick="app.navigate('prices')" class="desktop-nav-btn h-full px-3 font-bold text-gray-600 hover:text-primary transition">الحوائط والأنظمة الأخرى</button>
             <button data-view="worker" onclick="app.navigate('worker')" class="desktop-nav-btn h-full px-3 font-bold text-gray-600 hover:text-primary transition">حاسبة الصنايعي 2D</button>
             <button data-view="portfolio" onclick="app.navigate('portfolio')" class="desktop-nav-btn h-full px-3 font-bold text-gray-600 hover:text-primary transition">أعمالنا وخدماتنا</button>
+            <button data-view="calc" onclick="app.navigate('calc')" class="desktop-nav-btn h-full px-3 font-bold text-gray-600 hover:text-primary transition">⚡ احسب سعرك</button>
+            <button data-view="faq" onclick="app.navigate('faq')" class="desktop-nav-btn h-full px-3 font-bold text-gray-600 hover:text-primary transition">أسئلة شائعة</button>
             <a href="https://wa.me/201025013991" target="_blank" class="bg-primary text-gold px-4 py-2 rounded-lg font-bold text-sm hover:bg-primaryDark transition flex items-center gap-2 mr-4">
                 <span>اطلب معاينة / عرض سعر</span>
             </a>
@@ -104,6 +109,7 @@
             <button data-admin="labor" onclick="app.adminNavigate('labor')" class="admin-nav-item h-full px-3 flex items-center gap-1 whitespace-nowrap text-gray-600">👷 المصنعيات والأزرار</button>
             <button data-admin="packages" onclick="app.adminNavigate('packages')" class="admin-nav-item h-full px-3 flex items-center gap-1 whitespace-nowrap text-gray-600">🎯 الباقات والأسعار والنشر</button>
             <button data-admin="worker_quotes" onclick="app.adminNavigate('worker_quotes')" class="admin-nav-item h-full px-3 flex items-center gap-1 whitespace-nowrap text-gray-600">🛠️ الصنايعي 2D والمقايسات</button>
+            <span class="text-[10px] text-red-600 font-bold whitespace-nowrap px-2">⚠️ تعديلات الإدارة تُحفظ على هذا الجهاز فقط</span>
             <button onclick="app.logoutAdmin()" class="text-red-600 hover:bg-red-50 h-full px-3 flex items-center gap-1 whitespace-nowrap">🚪 خروج</button>
         </div>
     </nav>
@@ -132,6 +138,10 @@
                 <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
                 أعمالنا
             </button>
+            <button data-view="calc" onclick="app.navigate('calc')" class="nav-item flex flex-col items-center p-1.5 text-[11px] font-bold text-gray-500">
+                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"/></svg>
+                احسب سعرك
+            </button>
             <a href="https://wa.me/201025013991" target="_blank" class="nav-item flex flex-col items-center p-1.5 text-[11px] font-bold text-green-700">
                 <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
                 تواصل
@@ -147,6 +157,30 @@
         // 1. MASTER CATALOG (130 APPROVED ITEMS + 12 OPEN UNPRICED SLOTS)
         // =====================================================================
         const STORAGE_VERSION = 'darkom_v5_market_2026';
+        const APP_VERSION = '1.1.0';
+        const REMOTE_CONFIG_URL = 'https://raw.githubusercontent.com/darkomegy-lab/darkom-app/main/prices.json';
+        const BUSINESS_PHONE = '01025013991';
+        const BUSINESS_PHONE_INTL = '201025013991';
+        const MAPS_URL = 'https://maps.google.com/?q=' + encodeURIComponent('الحي السابع، الشيخ زايد، محافظة الجيزة');
+        const WARRANTY_YEARS = 5; // ⚠️ قيمة مؤقتة لحين تأكيد صاحب النشاط لمدة الضمان
+        const WORKING_HOURS = 'يومياً من 9 صباحاً حتى 10 مساءً';
+        const SERVICE_AREAS = ['الشيخ زايد', '6 أكتوبر', 'حدائق الأهرام', 'المهندسين', 'التجمع الخامس', 'المعادي', 'مدينة نصر', 'كل القاهرة الكبرى والجيزة'];
+        const SOCIAL_LINKS = { facebook: '', instagram: '', tiktok: '' }; // تُملأ عند توفر روابط صفحات النشاط
+        const ADMIN_PIN = '1234'; // رمز دخول لوحة الإدارة - غيّره من هنا
+
+        // تحميل أسعار محدثة عن بعد (prices.json في المستودع) قبل بناء المتجر
+        async function applyRemoteConfig() {
+            const r = await fetch(REMOTE_CONFIG_URL + '?t=' + Date.now(), { cache: 'no-store' });
+            if (!r.ok) return;
+            const rc = await r.json();
+            if (rc.materials) DEFAULT_MATERIALS.forEach(m => { const p = rc.materials[m.id]; if (p != null && !isNaN(Number(p))) m.price = Number(p); });
+            if (rc.labor) Object.keys(DEFAULT_LABOR).forEach(k => { if (rc.labor[k] != null && !isNaN(Number(rc.labor[k]))) DEFAULT_LABOR[k] = Number(rc.labor[k]); });
+            if (rc.config) Object.assign(DEFAULT_CONFIG, rc.config);
+            if (rc.app_version) {
+                const newer = rc.app_version.split('.').map(Number).join('.') > APP_VERSION.split('.').map(Number).join('.');
+                if (newer) window.__darkomUpdate = { version: rc.app_version, url: rc.apk_url || 'https://github.com/darkomegy-lab/darkom-app' };
+            }
+        }
 
         const DEFAULT_MATERIALS = [
             // ألواح جبس (1-19)
@@ -164,8 +198,8 @@
             {id:12, cat:"ألواح جبس", name:"أخضر عثمان 3م (12.50 مم)", unit:"لوح 3.60م²", price:420},
             {id:13, cat:"ألواح جبس", name:"أحمر عثمان 3م (12.50 مم)", unit:"لوح 3.60م²", price:425},
             {id:14, cat:"ألواح جبس", name:"أبيض جيبروك (بلاكو) 3م", unit:"لوح 3.60م²", price:425},
-            {id:15, cat:"ألواح جبس", name:"أخضر بلاكو 3م", unit:"لوح 3.60م²", price:0},
-            {id:16, cat:"ألواح جبس", name:"أحمر بلاكو 3م", unit:"لوح 3.60م²", price:0},
+            {id:15, cat:"ألواح جبس", name:"أخضر بلاكو 3م", unit:"لوح 3.60م²", price:485},
+            {id:16, cat:"ألواح جبس", name:"أحمر بلاكو 3م", unit:"لوح 3.60م²", price:510},
             {id:17, cat:"ألواح جبس", name:"أبيض تاي بورد الصيني", unit:"لوح", price:330},
             {id:18, cat:"ألواح جبس", name:"أبيض سولد 3م (12.50 مم)", unit:"لوح 3.60م²", price:370},
             {id:19, cat:"ألواح جبس", name:"أخضر سولد 3م (12.50 مم)", unit:"لوح 3.60م²", price:390},
@@ -278,7 +312,7 @@
             {id:117, cat:"سيمنت بورد", name:"سيمنت 12 مم جي بورد", unit:"لوح 2.88م²", price:1300},
             {id:118, cat:"سيمنت بورد", name:"سيمنت 12 مم توب بورد", unit:"لوح 2.88م²", price:1100},
             {id:119, cat:"سيمنت بورد", name:"سيمنت 9 مم جي بورد", unit:"لوح 2.88م²", price:1100},
-            {id:120, cat:"سيمنت بورد", name:"سيمنت 9 مم توب بورد", unit:"لوح 2.88م²", price:0},
+            {id:120, cat:"سيمنت بورد", name:"سيمنت 9 مم توب بورد", unit:"لوح 2.88م²", price:800},
             // صاج معتمد كناوف/جيبورد ومستلزمات (121-130)
             {id:121, cat:"صاج معتمد", name:"زاوية كناوف 0.4 مم", unit:"عود 3م", price:33.75},
             {id:122, cat:"صاج معتمد", name:"أوميجا كناوف 0.4 مم", unit:"عود 3م", price:76},
@@ -291,18 +325,18 @@
             {id:129, cat:"مستلزمات تركيب", name:"تيش 6 مم مصري 3م", unit:"عود 3م", price:35},
             {id:130, cat:"مستلزمات تركيب", name:"تيش 8 مم", unit:"عود", price:30},
             // النواقص (131-142)
-            {id:131, cat:"نواقص (60×60 وعزل)", name:"شاسيه Main Tee 3.60م (60×60)", unit:"عود 3.60م", price:0},
-            {id:132, cat:"نواقص (60×60 وعزل)", name:"شاسيه Cross Tee 1.20م (60×60)", unit:"قطعة 1.20م", price:0},
-            {id:133, cat:"نواقص (60×60 وعزل)", name:"شاسيه Cross Tee 0.60م (60×60)", unit:"قطعة 0.60م", price:0},
-            {id:134, cat:"نواقص (60×60 وعزل)", name:"زاوية محيطية 60×60 (Wall Angle)", unit:"عود 3م", price:0},
-            {id:135, cat:"نواقص (60×60 وعزل)", name:"صوف صخري 50 مم (عزل صوتي)", unit:"م²", price:0},
-            {id:136, cat:"نواقص (60×60 وعزل)", name:"ماجنتيك تراك (مسار إضاءة)", unit:"م.ط", price:0},
-            {id:137, cat:"نواقص (60×60 وعزل)", name:"بلاط صاج 60×60 ظاهر (Lay-in)", unit:"م²", price:0},
-            {id:138, cat:"نواقص (60×60 وعزل)", name:"بلاط ألمنيوم 60×60 ظاهر (Lay-in)", unit:"م²", price:0},
-            {id:139, cat:"نواقص (60×60 وعزل)", name:"بلاط صاج 60×60 مخفي (Clip-in)", unit:"م²", price:0},
-            {id:140, cat:"نواقص (60×60 وعزل)", name:"بلاط ألمنيوم 60×60 مخفي (Clip-in)", unit:"م²", price:0},
-            {id:141, cat:"نواقص (60×60 وعزل)", name:"شاسيه مخفي Clip-in (حامل+C+كلبس)", unit:"م²", price:0},
-            {id:142, cat:"نواقص (60×60 وعزل)", name:"طقم إكسسوار T-Grid جاهز (بديل مجمّع)", unit:"م²", price:0}
+            {id:131, cat:"نواقص (60×60 وعزل)", name:"شاسيه Main Tee 3.60م (60×60)", unit:"عود 3.60م", price:50},
+            {id:132, cat:"نواقص (60×60 وعزل)", name:"شاسيه Cross Tee 1.20م (60×60)", unit:"قطعة 1.20م", price:20},
+            {id:133, cat:"نواقص (60×60 وعزل)", name:"شاسيه Cross Tee 0.60م (60×60)", unit:"قطعة 0.60م", price:12},
+            {id:134, cat:"نواقص (60×60 وعزل)", name:"زاوية محيطية 60×60 (Wall Angle)", unit:"عود 3م", price:22},
+            {id:135, cat:"نواقص (60×60 وعزل)", name:"صوف صخري 50 مم (عزل صوتي)", unit:"م²", price:275},
+            {id:136, cat:"نواقص (60×60 وعزل)", name:"ماجنتيك تراك (مسار إضاءة)", unit:"م.ط", price:300},
+            {id:137, cat:"نواقص (60×60 وعزل)", name:"بلاط صاج 60×60 ظاهر (Lay-in)", unit:"م²", price:290},
+            {id:138, cat:"نواقص (60×60 وعزل)", name:"بلاط ألمنيوم 60×60 ظاهر (Lay-in)", unit:"م²", price:380},
+            {id:139, cat:"نواقص (60×60 وعزل)", name:"بلاط صاج 60×60 مخفي (Clip-in)", unit:"م²", price:300},
+            {id:140, cat:"نواقص (60×60 وعزل)", name:"بلاط ألمنيوم 60×60 مخفي (Clip-in)", unit:"م²", price:400},
+            {id:141, cat:"نواقص (60×60 وعزل)", name:"شاسيه مخفي Clip-in (حامل+C+كلبس)", unit:"م²", price:130},
+            {id:142, cat:"نواقص (60×60 وعزل)", name:"طقم إكسسوار T-Grid جاهز (بديل مجمّع)", unit:"م²", price:100}
         ];
 
         // مصنعيات محدثة بأسعار السوق (القاهرة الكبرى، نوفمبر 2026)
@@ -451,7 +485,7 @@
                 return useDraft ? { materials: this.materials, labor: this.labor, config: this.config } : this.published;
             }
         }
-        const store = new Store();
+        let store;
 
         // =====================================================================
         // 3. EXACT ENGINEERING PRICING ENGINE
@@ -720,6 +754,7 @@
             adminPkgColor: 'white',
             adminPkgSection: 'ceilings',
             quoteDraft: { client: '', phone: '', pkgId: 'basic', color: 'white', showCost: false, items: [] },
+            calcSel: { area: 16, cove: 0, pkgId: 'basic', color: 'white', shadow: false, shadowLed: false },
             workerRooms: JSON.parse(JSON.stringify(DEFAULT_WORKER_ROOMS)),
             activeRoomId: 1,
 
@@ -739,6 +774,14 @@
             },
             init() {
                 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
+                if (window.__darkomUpdate) {
+                    const u = window.__darkomUpdate;
+                    const b = document.createElement('a');
+                    b.href = u.url; b.target = '_blank';
+                    b.className = 'fixed bottom-20 md:bottom-6 left-1/2 -translate-x-1/2 z-50 bg-gold text-primaryDark font-black text-xs md:text-sm px-5 py-3 rounded-2xl shadow-2xl border-2 border-primaryDark flex items-center gap-2';
+                    b.innerHTML = `🚀 فيه نسخة أحدث من التطبيق (${u.version}) — اضغط للتحميل`;
+                    document.body.appendChild(b);
+                }
                 window.addEventListener('beforeinstallprompt', (e) => {
                     e.preventDefault(); this.deferredPrompt = e;
                     document.getElementById('pwa-install-btn')?.classList.remove('hidden');
@@ -759,8 +802,10 @@
                 document.querySelectorAll('.nav-item, .desktop-nav-btn').forEach(el => el.classList.toggle('active', el.dataset.view === view));
                 if (view === 'home') this.renderHome(main);
                 else if (view === 'prices') this.renderPrices(main);
+                else if (view === 'calc') this.renderCalc(main);
                 else if (view === 'worker') this.renderWorker(main, false);
                 else if (view === 'portfolio') this.renderPortfolio(main);
+                else if (view === 'faq') this.renderFaq(main);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             },
 
@@ -773,9 +818,16 @@
                     <div class="bg-gradient-to-l from-primaryDark to-primary text-white rounded-2xl p-6 md:p-8 mb-6 shadow-lg">
                         <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                             <div>
-                                <span class="inline-block bg-gold/20 text-gold text-xs font-bold px-3 py-1 rounded-full mb-2">أسعار شفافة بالمتر — توريد وتركيب</span>
+                                <div class="flex flex-wrap gap-2 mb-2">
+                                    <span class="inline-block bg-gold/20 text-gold text-xs font-bold px-3 py-1 rounded-full">أسعار شفافة بالمتر — توريد وتركيب</span>
+                                    <span class="inline-block bg-white/15 text-white text-xs font-bold px-3 py-1 rounded-full">🛡️ ضمان تنفيذ ${WARRANTY_YEARS} سنوات</span>
+                                </div>
                                 <h2 class="text-2xl md:text-3xl font-black mb-1">باقات الأسقف المعلقة الجبس بورد</h2>
                                 <p class="text-gray-200 text-sm">قارن بين الباقات الـ 5 بسعر المتر المسطح وسعر المتر الطولي (بيت النور)، وجرّب الترقية للأخضر والأحمر والشادو جاب وكورنر وإند بيد فوراً.</p>
+                                <div class="flex flex-wrap gap-2 mt-3">
+                                    <button onclick="app.navigate('calc')" class="bg-white text-primaryDark px-4 py-2 rounded-xl font-black text-xs shadow hover:bg-gray-100 transition">⚡ احسب سعر شقتك في ثواني</button>
+                                    <button onclick="app.navigate('faq')" class="bg-white/15 text-white px-4 py-2 rounded-xl font-bold text-xs hover:bg-white/25 transition">❓ أسئلة شائعة</button>
+                                </div>
                             </div>
                             <button onclick="app.navigate('prices')" class="bg-gold text-primaryDark px-5 py-3 rounded-xl font-extrabold text-sm shadow hover:bg-goldDark transition shrink-0">أسعار الحوائط والسيمنت و60×60 ←</button>
                         </div>
@@ -1314,7 +1366,7 @@
                         </div>
                         <div class="flex gap-2">
                             <button onclick="if(confirm('تفريغ بنود المقايسة الحالية فقط؟')) { app.quoteDraft.items=[]; app.adminNavigate('worker_quotes'); app.toast('تم تفريغ المقايسة'); }" class="bg-gray-200 text-gray-800 px-3 py-2 rounded-xl font-bold text-xs">↺ تفريغ المقايسة</button>
-                            <button onclick="window.print()" class="bg-primary text-gold px-4 py-2 rounded-xl font-bold text-xs">🖨️ طباعة / PDF</button>
+                            <button onclick="app.printQuote()" class="bg-primary text-gold px-4 py-2 rounded-xl font-bold text-xs">🖨️ عرض سعر PDF</button>
                         </div>
                     </div>
 
@@ -1462,6 +1514,52 @@
                 if (item) { this.quoteDraft.items.push(item); this.adminNavigate('worker_quotes'); }
             },
 
+            printQuote() {
+                const q = this.quoteDraft;
+                if (!q.items.length) { this.toast('أضف بنوداً للمقايسة أولاً'); return; }
+                const total = q.items.reduce((s, it) => s + it.unitSell * it.qty, 0);
+                const rows = q.items.map((it, i) => `
+                    <tr>
+                        <td>${i + 1}</td>
+                        <td style="text-align:right">${it.label}</td>
+                        <td>${it.qty} ${it.unit}</td>
+                        <td>${it.unitSell} ج</td>
+                        <td>${Math.round(it.qty * it.unitSell).toLocaleString()} ج</td>
+                    </tr>`).join('');
+                const today = new Date().toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
+                const w = window.open('', '_blank');
+                w.document.write(`<!doctype html><html dir="rtl" lang="ar"><head><meta charset="utf-8"><title>عرض سعر - داركم للجبس بورد</title>
+                <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;700;900&display=swap" rel="stylesheet">
+                <style>
+                    body{font-family:'Cairo',sans-serif;color:#1a1a1a;margin:0;padding:24px;}
+                    .head{display:flex;justify-content:space-between;align-items:center;background:#14351D;color:#fff;padding:20px 24px;border-radius:12px;}
+                    .brand{font-size:24px;font-weight:900;color:#F0CE41;}
+                    .brand small{display:block;font-size:12px;color:#d7e3da;font-weight:400;}
+                    .meta{text-align:left;font-size:12px;line-height:1.8;}
+                    .client{margin:20px 0;padding:14px 18px;background:#f4f7f5;border-radius:10px;font-size:14px;}
+                    table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13px;}
+                    th{background:#1E4D2B;color:#fff;padding:10px;}
+                    td{padding:9px 10px;border-bottom:1px solid #e5e7eb;text-align:center;}
+                    .total{margin-top:16px;background:#F0CE41;color:#14351D;font-weight:900;font-size:18px;padding:14px 18px;border-radius:10px;display:flex;justify-content:space-between;}
+                    .foot{margin-top:22px;font-size:12px;color:#555;line-height:2;border-top:2px solid #14351D;padding-top:12px;}
+                    @media print{body{padding:0;}}
+                </style></head><body>
+                    <div class="head">
+                        <div class="brand">داركم للجبس بورد<small>DARKOM GYPSUM PRO — أسقف وحوائط وعزل</small></div>
+                        <div class="meta">عرض سعر رسمي<br>${today}<br>${BUSINESS_PHONE}</div>
+                    </div>
+                    <div class="client"><strong>العميل:</strong> ${q.client || 'الكريم'}${q.phone ? ' &nbsp;|&nbsp; <strong>تليفون:</strong> ' + q.phone : ''}</div>
+                    <table><thead><tr><th>#</th><th>البند</th><th>الكمية</th><th>سعر الوحدة</th><th>الإجمالي</th></tr></thead><tbody>${rows}</tbody></table>
+                    <div class="total"><span>الإجمالي النهائي</span><span>${Math.round(total).toLocaleString()} ج.م</span></div>
+                    <div class="foot">
+                        الأسعار توريد وتركيب ومصنعية، غير شاملة الدهانات النهائية. العرض صالح 7 أيام من تاريخه.<br>
+                        ضمان تنفيذ ${WARRANTY_YEARS} سنوات ضد عيوب التركيب. للتأكيد أو الاستفسار: ${BUSINESS_PHONE} (واتساب / اتصال).<br>
+                        العنوان: الحي السابع، الشيخ زايد، محافظة الجيزة — ${WORKING_HOURS}.
+                    </div>
+                <script>window.onload=()=>window.print();<\/script></body></html>`);
+                w.document.close();
+            },
+
             sendQuoteWhatsApp() {
                 const q = this.quoteDraft;
                 const total = q.items.reduce((s,it)=>s+it.unitSell*it.qty, 0);
@@ -1472,33 +1570,171 @@
             },
 
             // =================================================================
+            // PUBLIC VIEW: حاسبة العميل السريعة (احسب سعر شقتك)
+            // =================================================================
+            renderCalc(container) {
+                const ds = store.getDataset(false);
+                const s = this.calcSel;
+                const res = Engine.calcPackage(ds, s.pkgId, s.color, { tish: false, shadow: s.shadow, shadowLed: s.shadowLed, corner: false, endBead: false });
+                const total = res.missing ? null : Math.round(res.flatPrice * s.area + res.covePrice * (s.cove || 0));
+                const colorLbl = { white: 'أبيض', green: 'أخضر', red: 'أحمر' }[s.color];
+                const pkg = PACKAGES_DEF.find(p => p.id === s.pkgId);
+                const waText = `مرحباً داركم، حسبت من التطبيق: ${pkg.name} (${colorLbl}) لمساحة ${s.area} م²${s.cove ? ' + ' + s.cove + ' م.ط بيت نور' : ''} ≈ ${total ? total.toLocaleString() : ''} ج — عايز معاينة`;
+                container.innerHTML = `
+                    <div class="max-w-2xl mx-auto">
+                        <div class="text-center mb-6">
+                            <h2 class="text-3xl font-black text-primary mb-2">⚡ احسب سعر شقتك في ثواني</h2>
+                            <p class="text-gray-600 text-sm">سعر تقديري فوري — المعاينة المجانية هي اللي بتحدد السعر النهائي بدقة</p>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-md border p-5 space-y-5">
+                            <div>
+                                <div class="text-xs font-extrabold text-primary mb-2">1. مساحة الأسقف بالمتر المربع:</div>
+                                <div class="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden max-w-xs">
+                                    <button onclick="app.calcSel.area=Math.max(1,app.calcSel.area-1); app.renderCalc(document.getElementById('main-content'))" class="px-4 py-2.5 bg-gray-100 font-black text-primary">−</button>
+                                    <input type="number" value="${s.area}" onchange="app.calcSel.area=Math.max(1,Number(this.value)||1); app.renderCalc(document.getElementById('main-content'))" class="w-full text-center font-extrabold py-2.5 outline-none">
+                                    <button onclick="app.calcSel.area++; app.renderCalc(document.getElementById('main-content'))" class="px-4 py-2.5 bg-gray-100 font-black text-primary">+</button>
+                                </div>
+                                <div class="text-[11px] text-gray-400 mt-1">مثال: ريسبشن 4×5 = 20 م² | غرفة 4×4 = 16 م²</div>
+                            </div>
+                            <div>
+                                <div class="text-xs font-extrabold text-primary mb-2">2. اختار الباقة:</div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${PACKAGES_DEF.map(p => `<button onclick="app.calcSel.pkgId='${p.id}'; app.renderCalc(document.getElementById('main-content'))" class="py-2.5 px-3 rounded-xl border-2 text-xs font-bold text-right ${s.pkgId===p.id?'border-primary bg-primary text-white':'border-gray-200'}">${p.name}</button>`).join('')}</div>
+                            </div>
+                            <div>
+                                <div class="text-xs font-extrabold text-primary mb-2">3. لون الألواح:</div>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <button onclick="app.calcSel.color='white'; app.renderCalc(document.getElementById('main-content'))" class="py-2 rounded-xl border-2 text-xs font-bold ${s.color==='white'?'border-primary bg-primary text-white':'border-gray-200'}">⚪ أبيض</button>
+                                    <button onclick="app.calcSel.color='green'; app.renderCalc(document.getElementById('main-content'))" class="py-2 rounded-xl border-2 text-xs font-bold ${s.color==='green'?'border-green-600 bg-green-600 text-white':'border-gray-200'}">🟢 أخضر</button>
+                                    <button onclick="app.calcSel.color='red'; app.renderCalc(document.getElementById('main-content'))" class="py-2 rounded-xl border-2 text-xs font-bold ${s.color==='red'?'border-red-600 bg-red-600 text-white':'border-gray-200'}">🔴 أحمر</button>
+                                </div>
+                            </div>
+                            <div>
+                                <div class="text-xs font-extrabold text-primary mb-2">4. بيت نور / شادو (اختياري):</div>
+                                <div class="grid grid-cols-2 gap-2 mb-2">
+                                    <button onclick="app.calcSel.shadow=!app.calcSel.shadow; if(app.calcSel.shadow)app.calcSel.shadowLed=false; app.renderCalc(document.getElementById('main-content'))" class="py-2 rounded-xl border-2 text-xs font-bold ${s.shadow?'border-gold bg-gold text-primaryDark':'border-gray-200'}">${s.shadow?'✓ ':''}شادو عادي</button>
+                                    <button onclick="app.calcSel.shadowLed=!app.calcSel.shadowLed; if(app.calcSel.shadowLed)app.calcSel.shadow=false; app.renderCalc(document.getElementById('main-content'))" class="py-2 rounded-xl border-2 text-xs font-bold ${s.shadowLed?'border-gold bg-gold text-primaryDark':'border-gray-200'}">${s.shadowLed?'✓ ':''}شادو ليد</button>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-[11px] text-gray-500 whitespace-nowrap">أمتار بيت النور (محيط الغرفة):</span>
+                                    <input type="number" value="${s.cove}" onchange="app.calcSel.cove=Math.max(0,Number(this.value)||0); app.renderCalc(document.getElementById('main-content'))" class="w-20 text-center border-2 border-gray-200 rounded-xl font-extrabold py-1.5 outline-none">
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gradient-to-l from-primaryDark to-primary text-white rounded-2xl p-6 mt-5 text-center shadow-lg">
+                            ${total === null ? `
+                                <div class="text-xl font-black text-gold mb-2">في بنود ناقصة التسعير في الباقة دي</div>
+                                <p class="text-sm text-gray-200 mb-4">ابعتلنا واتساب وهنرد عليك بعرض سعر فوري</p>
+                            ` : `
+                                <div class="text-xs text-gray-200 mb-1">التقدير الإجمالي (${s.area} م²${s.cove ? ' + ' + s.cove + ' م.ط' : ''})</div>
+                                <div class="text-4xl font-black text-gold mb-1">${total.toLocaleString()} <span class="text-base">ج.م</span></div>
+                                <div class="text-[11px] text-gray-300 mb-4">${res.flatPrice} ج/م²${s.cove ? ' + ' + res.covePrice + ' ج/م.ط' : ''} — شامل توريد وتركيب ومصنعية، بدون الدهانات</div>
+                            `}
+                            <div class="flex flex-col sm:flex-row gap-2 justify-center">
+                                <a href="https://wa.me/${BUSINESS_PHONE_INTL}?text=${encodeURIComponent(waText)}" target="_blank" class="bg-gold text-primaryDark font-black px-6 py-3 rounded-xl text-sm">اطلب معاينة مجانية</a>
+                                <a href="tel:+${BUSINESS_PHONE_INTL}" class="bg-white/15 text-white font-bold px-6 py-3 rounded-xl text-sm">📞 ${BUSINESS_PHONE}</a>
+                            </div>
+                        </div>
+                    </div>`;
+            },
+
+            // =================================================================
+            // PUBLIC VIEW: الأسئلة الشائعة
+            // =================================================================
+            renderFaq(container) {
+                const faqs = [
+                    ['هل الأسعار المعروضة شاملة؟', 'أيوه، كل أسعار التطبيق توريد + تركيب + مصنعية بالمتر. غير شاملة الدهانات النهائية (النقاشة) فقط.'],
+                    ['الفريق بيخلص شقة في قد إيه؟', 'الشقة المتوسطة (100-150 م²) بتاخد عادة من 3 لـ 7 أيام عمل حسب التصميم وعدد البنود.'],
+                    ['إيه الفرق بين اللوح الأبيض والأخضر والأحمر؟', 'الأبيض للأماكن الجافة (غرف وريسبشن)، الأخضر مقاوم للرطوبة (حمامات ومطابخ)، الأحمر مقاوم للحريق (مطابخ ومداخل وأماكن تجارية).'],
+                    ['هل في ضمان على الشغل؟', `أيوه، ضمان تنفيذ ${WARRANTY_YEARS} سنوات ضد عيوب التركيب والهياكل.`],
+                    ['نظام الدفع إزاي؟', 'عربون جدية عند الاتفاق، والباقي على دفعات حسب تقدم الشغل. مفيش مقدم كبير.'],
+                    ['المعاينة بفلوس؟', 'لا، المعاينة والمقايسة مجانية تماماً داخل مناطق الخدمة.'],
+                    ['بتشتغلوا في أنهي مناطق؟', SERVICE_AREAS.join('، ') + '.'],
+                    ['إزاي أطلب؟', 'واتساب أو مكالمة على ' + BUSINESS_PHONE + ' — بنرد بسرعة ونحدد معاد معاينة يناسبك.']
+                ];
+                container.innerHTML = `
+                    <div class="max-w-2xl mx-auto">
+                        <div class="text-center mb-6">
+                            <h2 class="text-3xl font-black text-primary mb-2">❓ أسئلة شائعة</h2>
+                            <p class="text-gray-600 text-sm">كل اللي بيسأل عنه عملاؤنا قبل ما يبدأوا</p>
+                        </div>
+                        <div class="space-y-3">
+                            ${faqs.map(([q, a], i) => `
+                                <details class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden group">
+                                    <summary class="cursor-pointer p-4 font-black text-primaryDark text-sm flex justify-between items-center gap-2 list-none">
+                                        <span>${i + 1}. ${q}</span>
+                                        <span class="text-goldDark text-lg transition group-open:rotate-45">+</span>
+                                    </summary>
+                                    <div class="px-4 pb-4 text-sm text-gray-600 leading-relaxed border-t border-gray-100 pt-3">${a}</div>
+                                </details>
+                            `).join('')}
+                        </div>
+                        <div class="mt-6 bg-primaryDark text-white p-6 rounded-2xl text-center shadow-lg">
+                            <h3 class="text-lg font-black text-gold mb-2">لسه عندك سؤال؟</h3>
+                            <div class="flex flex-col sm:flex-row gap-2 justify-center mt-3">
+                                <a href="https://wa.me/${BUSINESS_PHONE_INTL}" target="_blank" class="bg-gold text-primaryDark font-black px-6 py-3 rounded-xl text-sm">واتساب: ${BUSINESS_PHONE}</a>
+                                <a href="tel:+${BUSINESS_PHONE_INTL}" class="bg-white/15 text-white font-bold px-6 py-3 rounded-xl text-sm">📞 اتصل بينا</a>
+                            </div>
+                        </div>
+                    </div>`;
+            },
+
+            // =================================================================
             // PUBLIC VIEW 4: PORTFOLIO
             // =================================================================
             renderPortfolio(container) {
+                // لإضافة صور حقيقية: ضع ملفات portfolio/work1.jpg حتى work6.jpg في مجلد www ثم حدّث التطبيق
+                const WORKS = [
+                    { img: 'portfolio/work1.jpg', title: 'أسقف مستوية وبيت نور وشادو جاب', loc: 'الشيخ زايد / أكتوبر', desc: 'تنفيذ الباقة الاحترافية بصاج جولدن ميتال 0.60 مم وتيش معتمد مع كورنر وإند بيد وبروفايل ليد.' },
+                    { img: 'portfolio/work2.jpg', title: 'قواطع عزل صوتي W112 + صوف صخري', loc: 'التجمع الخامس / المعادي', desc: 'حوائط دبل طبقتين من كل وجه مع حشو صوف صخري للغرف الإدارية والعيادات.' },
+                    { img: 'portfolio/work3.jpg', title: 'حوائط وأسقف سيمنت بورد 5/7/10 سم', loc: 'المهندسين / حدائق الأهرام', desc: 'ألواح مقاومة للعوامل الجوية والرطوبة بقطاعات حوائط متعددة مع إمكانية العزل الصوتي.' },
+                    { img: 'portfolio/work4.jpg', title: 'بلاطات 60×60 للمحلات والمكاتب', loc: 'مدينة نصر / مصر الجديدة', desc: 'أسقف تعليق T-Grid وClip-in بتشطيب سريع ونظيف للأنشطة التجارية.' },
+                    { img: 'portfolio/work5.jpg', title: 'بيت نور وإضاءة مخفية للريسبشن', loc: 'الشيخ زايد', desc: 'شادو ليد وماجنتيك تراك بتوزيع إضاءة هندسي مدروس.' },
+                    { img: 'portfolio/work6.jpg', title: 'تجاليد حوائط وتلفزيونات', loc: 'أكتوبر / حدائق الأهرام', desc: 'تلبيس حوائط W111 بفواصل شادو جاب وتهيئة كاملة للدهان.' }
+                ];
+                const socials = [
+                    ['facebook', 'فيسبوك', 'M13.5 9H16l.5-3h-3V4.5c0-.9.3-1.5 1.6-1.5H16.6V.2C16.3.2 15.3 0 14.1 0 11.6 0 10 1.5 10 4.2V6H7v3h3v9h3.5V9z'],
+                    ['instagram', 'انستجرام', 'M12 2.2c3.2 0 3.6 0 4.9.1 3.3.1 4.8 1.7 4.9 4.9.1 1.3.1 1.6.1 4.8s0 3.6-.1 4.8c-.1 3.2-1.7 4.8-4.9 4.9-1.3.1-1.6.1-4.9.1s-3.6 0-4.9-.1c-3.3-.1-4.8-1.7-4.9-4.9-.1-1.3-.1-1.6-.1-4.8s0-3.6.1-4.8C2.3 4 3.9 2.4 7.2 2.3 8.4 2.2 8.8 2.2 12 2.2zm0 3.6a6.2 6.2 0 100 12.4 6.2 6.2 0 000-12.4zm0 10.2a4 4 0 110-8 4 4 0 010 8zm6.4-10.4a1.4 1.4 0 100-2.9 1.4 1.4 0 000 2.9z'],
+                    ['tiktok', 'تيك توك', 'M16.6 5.8a4.3 4.3 0 01-1-2.8h-3.2v13.1a2.8 2.8 0 11-2.8-2.8c.3 0 .6 0 .9.1V10a6 6 0 00-.9-.1 6 6 0 106 6V9.4a7.5 7.5 0 004.3 1.4V7.7a4.3 4.3 0 01-2.9-1.9z']
+                ].filter(([k]) => SOCIAL_LINKS[k]);
                 container.innerHTML = `
                     <div class="text-center mb-8">
                         <h2 class="text-3xl font-black text-primary mb-2">أعمالنا وخدماتنا</h2>
-                        <p class="text-gray-600 text-sm">التزام هندسي بالمواصفات المصرية ومواعيد التسليم في القاهرة الكبرى والجيزة</p>
+                        <p class="text-gray-600 text-sm">التزام هندسي بالمواصفات المصرية ومواعيد التسليم في القاهرة الكبرى والجيزة — ضمان تنفيذ ${WARRANTY_YEARS} سنوات</p>
                     </div>
                     <div class="grid md:grid-cols-3 gap-6">
-                        ${[
-                            { title: 'أسقف مستوية وبيت نور وشادو جاب', loc: 'الشيخ زايد / أكتوبر', desc: 'تنفيذ الباقة الاحترافية بصاج جولدن ميتال 0.60 مم وتيش معتمد مع كورنر وإند بيد وبروفايل ليد.' },
-                            { title: 'قواطع عزل صوتي W112 + صوف صخري', loc: 'التجمع الخامس / المعادي', desc: 'حوائط دبل طبقتين من كل وجه مع حشو صوف صخري للغرف الإدارية والعيادات.' },
-                            { title: 'حوائط وأسقف سيمنت بورد 5/7/10 سم', loc: 'المهندسين / حدائق الأهرام', desc: 'ألواح مقاومة للعوامل الجوية والرطوبة بقطاعات حوائط متعددة مع إمكانية العزل الصوتي.' }
-                        ].map(item => `
+                        ${WORKS.map(item => `
                             <div class="bg-white rounded-2xl shadow-md overflow-hidden border border-gray-100">
-                                <div class="h-36 bg-gradient-to-br from-primaryDark to-primary flex flex-col items-center justify-center text-gold p-4 text-center">
+                                <div class="h-44 relative bg-gradient-to-br from-primaryDark to-primary flex flex-col items-center justify-center text-gold p-4 text-center">
                                     <span class="text-3xl mb-1">🏗️</span>
                                     <span class="text-xs font-bold bg-black/25 px-3 py-1 rounded-full">${item.loc}</span>
+                                    <img src="${item.img}" alt="${item.title}" loading="lazy" class="absolute inset-0 w-full h-full object-cover" onerror="this.remove()">
                                 </div>
                                 <div class="p-5"><h3 class="font-black text-primaryDark mb-2">${item.title}</h3><p class="text-xs text-gray-600 leading-relaxed">${item.desc}</p></div>
                             </div>
                         `).join('')}
                     </div>
+                    <div class="mt-8 grid md:grid-cols-2 gap-4">
+                        <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+                            <h3 class="font-black text-primaryDark mb-3">📍 العنوان ومواعيد العمل</h3>
+                            <p class="text-sm text-gray-600 mb-1">الحي السابع، الشيخ زايد، محافظة الجيزة</p>
+                            <p class="text-sm text-gray-600 mb-3">🕐 ${WORKING_HOURS}</p>
+                            <div class="flex flex-wrap gap-1.5 mb-4">${SERVICE_AREAS.map(a => `<span class="text-[11px] font-bold bg-primary/10 text-primary px-2.5 py-1 rounded-full">${a}</span>`).join('')}</div>
+                            <a href="${MAPS_URL}" target="_blank" class="inline-block bg-primary text-gold font-black px-5 py-2.5 rounded-xl text-sm">افتح الموقع على الخريطة 🗺️</a>
+                        </div>
+                        <div class="bg-white rounded-2xl shadow-md border border-gray-100 p-6">
+                            <h3 class="font-black text-primaryDark mb-3">🛡️ ضمان داركم</h3>
+                            <p class="text-sm text-gray-600 leading-relaxed mb-3">ضمان تنفيذ ${WARRANTY_YEARS} سنوات ضد عيوب التركيب والهياكل المعدنية، ومعاينة ومقايسة مجانية قبل أي التزام.</p>
+                            ${socials.length ? `<div class="flex gap-2 mt-2">${socials.map(([k, lbl, path]) => `<a href="${SOCIAL_LINKS[k]}" target="_blank" class="flex items-center gap-1.5 bg-gray-100 hover:bg-primary hover:text-white text-gray-700 text-xs font-bold px-3 py-2 rounded-lg transition"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="${path}"/></svg>${lbl}</a>`).join('')}</div>` : ''}
+                        </div>
+                    </div>
                     <div class="mt-8 bg-primaryDark text-white p-8 rounded-2xl text-center shadow-lg">
                         <h3 class="text-2xl font-black text-gold mb-2">احجز معاينة فنية ومقايسة دقيقة</h3>
-                        <p class="text-sm text-gray-200 mb-5">الحي السابع، الشيخ زايد، محافظة الجيزة</p>
-                        <a href="https://wa.me/201025013991" target="_blank" class="inline-block bg-gold text-primaryDark font-black px-8 py-3.5 rounded-xl">تواصل واتساب: 01025013991</a>
+                        <p class="text-sm text-gray-200 mb-5">الحي السابع، الشيخ زايد، محافظة الجيزة — ${WORKING_HOURS}</p>
+                        <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                            <a href="https://wa.me/${BUSINESS_PHONE_INTL}" target="_blank" class="inline-block bg-gold text-primaryDark font-black px-8 py-3.5 rounded-xl">تواصل واتساب: ${BUSINESS_PHONE}</a>
+                            <a href="tel:+${BUSINESS_PHONE_INTL}" class="inline-block bg-white/15 text-white font-black px-8 py-3.5 rounded-xl">📞 اتصل بينا دلوقتي</a>
+                        </div>
+                        <div class="mt-4"><button onclick="app.navigate('faq')" class="text-gold text-xs font-bold underline underline-offset-4">الأسئلة الشائعة ←</button></div>
                     </div>`;
             },
 
@@ -1507,8 +1743,8 @@
             // =================================================================
             toggleAdminLogin() {
                 if (store.isAdmin) { this.logoutAdmin(); return; }
-                const pin = prompt("أدخل رمز الدخول السري لإدارة DARKOM ERP (الافتراضي: 1234):");
-                if (pin === "1234") {
+                const pin = prompt("أدخل رمز الدخول السري لإدارة DARKOM ERP:");
+                if (pin === ADMIN_PIN) {
                     store.isAdmin = true; sessionStorage.setItem('darkom_admin', 'true');
                     this.updateNavVisibility(); this.adminNavigate('materials');
                     this.toast("مرحباً بك في لوحة GYPSUM PRO ERP");
@@ -1884,7 +2120,11 @@
             }
         };
 
-        document.addEventListener('DOMContentLoaded', () => app.init());
+        document.addEventListener('DOMContentLoaded', async () => {
+            try { await applyRemoteConfig(); } catch (e) { /* بدون إنترنت: نكمل بالأسعار المدمجة */ }
+            store = new Store();
+            app.init();
+        });
     </script>
 </body>
 </html>
