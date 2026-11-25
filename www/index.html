@@ -402,7 +402,7 @@
                 angleId: 30, omegaId: 31, cId: 32, includes_tish: false, auto_beads: false
             },
             {
-                id: 'standard', name: 'الباقة القياسية', badge: 'الأكثر طلباً',
+                id: 'standard', name: 'الباقة القياسية', badge: 'الأكثر طلباً', popular: true,
                 spec: 'صاج 0.40 مم + ألواح كناوف 3م + تعليق جنش',
                 boardIds: { white: 1, green: 2, red: 3 },
                 angleId: 33, omegaId: 34, cId: 35, includes_tish: false, auto_beads: false
@@ -918,11 +918,11 @@
                     const waText = `مرحباً داركم، أستفسر عن ${pkg.name} (ألواح: ${colorInfo.label})${activeNames.length ? ' + إضافات: ' + activeNames.join('، ') : ''} — مسطح ${res.flatPrice} ج/م² | طولي ${res.covePrice} ج/م.ط`;
 
                     return `
-                        <div class="glass-panel rounded-2xl p-5 shadow-md hover:shadow-xl transition flex flex-col justify-between border-t-4 ${pkg.id==='pro'?'border-gold':(pkg.id==='premium'?'border-green-600':'border-primary')}">
+                        <div class="glass-panel rounded-2xl p-5 shadow-md hover:shadow-xl transition flex flex-col justify-between border-t-4 ${pkg.popular ? 'border-gold ring-2 ring-gold/50 shadow-lg shadow-gold/20' : (pkg.id==='pro'?'border-gold':(pkg.id==='premium'?'border-green-600':'border-primary'))}">
                             <div>
                                 <div class="flex justify-between items-start gap-2 mb-2">
                                     <div>
-                                        ${pkg.badge ? `<span class="text-[11px] font-bold text-primary bg-primary/10 px-2.5 py-0.5 rounded-full">${pkg.badge}</span>` : ''}
+                                        ${pkg.badge ? `<span class="text-[11px] font-bold ${pkg.popular ? 'bg-gold text-primaryDark' : 'text-primary bg-primary/10'} px-2.5 py-0.5 rounded-full">${pkg.badge}</span>` : ''}
                                         <h3 class="text-lg font-black text-primaryDark mt-1.5">${pkg.name}</h3>
                                     </div>
                                     <span class="${colorInfo.cls} text-[11px] font-bold px-2.5 py-1 rounded-lg whitespace-nowrap">${colorInfo.label}</span>
