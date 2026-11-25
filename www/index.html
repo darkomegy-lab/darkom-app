@@ -157,7 +157,7 @@
         // 1. MASTER CATALOG (130 APPROVED ITEMS + 12 OPEN UNPRICED SLOTS)
         // =====================================================================
         const STORAGE_VERSION = 'darkom_v6_shadow150_2026';
-        const APP_VERSION = '1.1.0';
+        const APP_VERSION = '1.1.2';
         const REMOTE_CONFIG_URL = 'https://raw.githubusercontent.com/darkomegy-lab/darkom-app/main/prices.json';
         const BUSINESS_PHONE = '01025013991';
         const BUSINESS_PHONE_INTL = '201025013991';
@@ -177,8 +177,17 @@
             if (rc.labor) Object.keys(DEFAULT_LABOR).forEach(k => { if (rc.labor[k] != null && !isNaN(Number(rc.labor[k]))) DEFAULT_LABOR[k] = Number(rc.labor[k]); });
             if (rc.config) Object.assign(DEFAULT_CONFIG, rc.config);
             if (rc.app_version) {
-                const newer = rc.app_version.split('.').map(Number).join('.') > APP_VERSION.split('.').map(Number).join('.');
-                if (newer) window.__darkomUpdate = { version: rc.app_version, url: rc.apk_url || 'https://github.com/darkomegy-lab/darkom-app' };
+                // مقارنة رقمية صحيحة للإصدارات (1.1.10 > 1.1.2)
+                const parseV = v => String(v).split('.').map(n => parseInt(n, 10) || 0);
+                const rv = parseV(rc.app_version), lv = parseV(APP_VERSION);
+                let newer = false;
+                for (let i = 0; i < Math.max(rv.length, lv.length); i++) {
+                    const d = (rv[i] || 0) - (lv[i] || 0);
+                    if (d !== 0) { newer = d > 0; break; }
+                }
+                // التنبيه يظهر فقط داخل تطبيق أندرويد (Capacitor) - نسخة الويب تتحدث تلقائياً
+                const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+                if (newer && isNative) window.__darkomUpdate = { version: rc.app_version, url: rc.apk_url || 'https://github.com/darkomegy-lab/darkom-app/releases/latest' };
             }
         }
 
