@@ -597,14 +597,15 @@
                 const flatSusp = this.suspensionFlatMat(ds, useTish);
                 const flatFast = this.ceilingFastPuttyMat(ds, useTish);
                 const baseFlatMat = flatBoards + flatMetal + flatSusp + flatFast;
-                const baseFlatLabor = useTish ? ds.labor.ceiling_tish_m2 : ds.labor.ceiling_genish_m2;
+                const puttyLabor = Number(ds.labor.putty_m) || 0;
+                const baseFlatLabor = (useTish ? ds.labor.ceiling_tish_m2 : ds.labor.ceiling_genish_m2) + puttyLabor;
                 let flatCost = baseFlatMat + baseFlatLabor;
 
                 // 2) Base Linear Cove (m.ط) — Uses exact color boardP!
                 let baseCoveMat = (0.5175/3.60)*boardP + (2.16/3)*angleP + (1.10/3)*omegaP
                     + 1.05*(this.priceOf(ds,46)/30) + 0.25*(this.priceOf(ds,49)/12.5)
                     + 12*(this.priceOf(ds,57)/1000) + 8*(this.priceOf(ds,67)/1000);
-                let baseCoveLabor = ds.labor.ceiling_linear_m;
+                let baseCoveLabor = ds.labor.ceiling_linear_m + puttyLabor;
 
                 if (!pkg.includes_tish && addons.tish) {
                     baseCoveMat += this.tishLinearMatDelta(ds);
@@ -677,6 +678,7 @@
                 if (system === 'cladding') { boardsCost = board1Face; fastCost = 17*s25 + 6*tek + 2*fischer + 0.40*puttyKg + 1.60*fiberM; labor = ds.labor.wall_cladding_m2; }
                 else if (system === 'w111') { boardsCost = board1Face*2; fastCost = 32*s25 + 6*tek + 2*fischer + 0.75*puttyKg + 3.20*fiberM; labor = ds.labor.wall_w111_m2; }
                 else { boardsCost = board1Face*4; fastCost = 15*s25 + 32*s35 + 6*tek + 2*fischer + 0.95*puttyKg + 3.20*fiberM; labor = ds.labor.wall_w112_m2; }
+                labor += Number(ds.labor.putty_m) || 0;
 
                 let rockwoolMissing = false, rockwoolCost = 0;
                 if (rockwool) {
@@ -1897,7 +1899,7 @@
                     ['shadow_led_m', 'مصنعية شادو جاب ليد (ج/م.ط)'],
                     ['corner_bead_m', 'مصنعية كورنر بيد (ج/م.ط)'],
                     ['end_bead_m', 'مصنعية إند بيد (ج/م.ط)'],
-                    ['putty_m', 'مصنعية معجون (ج/م.ط)'],
+                    ['putty_m', 'مصنعية معجون (ج/م² أو م.ط)'],
                     ['access_panel_pc', 'مصنعية باب كشف (ج/قطعة)'],
                     ['rockwool_m2', 'مصنعية صوف صخري عزل صوتي (ج/م²)']
                 ];
