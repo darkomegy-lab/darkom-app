@@ -8,11 +8,16 @@
         function gtag(){dataLayer.push(arguments);}
         gtag('js', new Date());
         gtag('config', 'G-3QFQ00CCM3');
+        // GA4 click events. Names: click_call, click_whatsapp, request_inspection, open_contact_menu.
+        // Only the page path is sent. No phone numbers, message texts or user input.
         document.addEventListener('click', function (e) {
-            var a = e.target.closest && e.target.closest('a[href]'); if (!a) return;
-            var h = a.getAttribute('href') || '';
-            if (/wa\.me|api\.whatsapp\.com/.test(h)) gtag('event', 'generate_lead', { method: 'whatsapp' });
-            else if (/^tel:/.test(h)) gtag('event', 'generate_lead', { method: 'call' });
+            var el = e.target.closest && e.target.closest('a[href],button'); if (!el) return;
+            var h = (el.getAttribute && el.getAttribute('href')) || '', oc = (el.getAttribute && el.getAttribute('onclick')) || '';
+            var p = { page_path: location.pathname };
+            if (/^tel:/.test(h)) gtag('event', 'click_call', p);
+            else if (/wa\.me|api\.whatsapp\.com/.test(h)) gtag('event', 'click_whatsapp', p);
+            else if (/openContact\(/.test(oc)) gtag('event', 'open_contact_menu', p);
+            if ((el.textContent || '').indexOf('\u0645\u0639\u0627\u064a\u0646\u0629') !== -1 && (/wa\.me|api\.whatsapp\.com/.test(h) || /openContact\(/.test(oc))) gtag('event', 'request_inspection', p);
         }, true);
     </script>
 
