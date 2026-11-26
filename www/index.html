@@ -1483,13 +1483,13 @@
                     <div style="margin-top:26px;border-top:2px solid #2B3615;padding-top:12px;font-size:12px;color:#4B5563;line-height:2">
                         ${isInv ? 'شكراً لتعاملكم مع داركم.' : 'الأسعار توريد وتركيب ومصنعية، غير شاملة الدهانات النهائية. العرض صالح 7 أيام من تاريخه.'}<br>
                         ضمان تنفيذ ${WARRANTY_LABEL} ضد عيوب التركيب (على التركيب فقط، ولا يشمل تلف الخامات من تسريب مياه أو سوء استخدام).<br>
-                        للتأكيد أو الاستفسار: ${BUSINESS_PHONE} (واتساب / اتصال) — الحي السابع، الشيخ زايد، محافظة الجيزة — ${WORKING_HOURS}.
+                        للتأكيد أو الاستفسار: ${BUSINESS_PHONE} (واتساب / اتصال)${doc.showAddress === false ? '' : ' — الحي السابع، الشيخ زايد، محافظة الجيزة'} — ${WORKING_HOURS}.
                     </div>
                     ${this.verifyBlockHtml(doc)}
                 </div>`;
             },
             verifyBlockHtml(doc) {
-                if (!doc.verify) return '';
+                if (!doc.verify || doc.showQr === false) return '';
                 let svg = '';
                 try { const qr = qrcode(0, 'M'); qr.addData(this.verifyUrl(doc)); qr.make(); svg = qr.createSvgTag({ cellSize: 3, margin: 0, scalable: true }); } catch (e) { return ''; }
                 return `<div style="margin-top:12px;display:flex;align-items:center;gap:12px;border:1px dashed #9CA3AF;border-radius:10px;padding:8px 12px">
@@ -1507,6 +1507,8 @@
                     <div style="background:#fff;border-radius:14px;padding:10px;margin-bottom:10px;font-family:Cairo,sans-serif">
                         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;font-weight:700;margin-bottom:8px">
                             <span style="font-weight:900;color:#14351D">${isInv ? '🧾 فاتورة' : '📄 عرض سعر'} ${doc.no}</span>
+                            <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" ${doc.showAddress === false ? '' : 'checked'} onchange="app.updateDoc('${id}',{showAddress:this.checked}); app.showDoc('${id}')"> العنوان</label>
+                            <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" ${doc.showQr === false ? '' : 'checked'} onchange="app.updateDoc('${id}',{showQr:this.checked}); app.showDoc('${id}')"> QR التحقق</label>
                             <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" ${doc.vat ? 'checked' : ''} onchange="app.updateDoc('${id}',{vat:this.checked}); app.showDoc('${id}')"> ضريبة قيمة مضافة 14%</label>
                             ${isInv ? `<label style="display:flex;align-items:center;gap:4px">المدفوع حتى الآن (ج) <input type="number" min="0" value="${doc.deposit || ''}" placeholder="0" style="width:90px;border:1px solid #ccc;border-radius:8px;padding:3px 6px" onchange="app.updateDoc('${id}',{deposit:Math.max(0,parseFloat(this.value)||0),paid:false}); app.showDoc('${id}')"></label><label style="display:flex;align-items:center;gap:4px"><input type="checkbox" ${doc.paid ? 'checked' : ''} onchange="app.updateDoc('${id}',{paid:this.checked}); app.showDoc('${id}')"> مدفوعة بالكامل</label>` : ''}
                             <button onclick="document.getElementById('doc-overlay').remove()" style="margin-right:auto;background:#E5E7EB;border-radius:8px;padding:5px 12px;font-weight:800">✕ إغلاق</button>
