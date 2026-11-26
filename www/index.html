@@ -391,31 +391,31 @@
 
         const PACKAGES_DEF = [
             {
-                id: 'eco', name: 'الباقة العادية (الاقتصادية)', badge: 'الأوفر سعراً',
+                id: 'eco', name: 'اقتصادية', badge: 'الأوفر سعراً',
                 spec: 'صاج 0.35 مم + ألواح جيبورد 3م + تعليق جنش',
                 boardIds: { white: 5, green: 6, red: 7 },
                 angleId: 30, omegaId: 31, cId: 32, includes_tish: false, auto_beads: false
             },
             {
-                id: 'basic', name: 'الباقة الأساسية', badge: '',
+                id: 'basic', name: 'أساسية', badge: '',
                 spec: 'صاج 0.35 مم + ألواح كناوف 3م + تعليق جنش',
                 boardIds: { white: 1, green: 2, red: 3 },
                 angleId: 30, omegaId: 31, cId: 32, includes_tish: false, auto_beads: false
             },
             {
-                id: 'standard', name: 'الباقة القياسية', badge: 'الأكثر طلباً', popular: true,
+                id: 'standard', name: 'قياسية', badge: 'الأكثر طلباً', popular: true,
                 spec: 'صاج 0.40 مم + ألواح كناوف 3م + تعليق جنش',
                 boardIds: { white: 1, green: 2, red: 3 },
                 angleId: 33, omegaId: 34, cId: 35, includes_tish: false, auto_beads: false
             },
             {
-                id: 'premium', name: 'الباقة المميزة', badge: 'هندسي معتمد',
+                id: 'premium', name: 'مميزة', badge: 'هندسي معتمد',
                 spec: 'صاج جولدن ميتال 0.50 مم + ألواح كناوف 3م + تيش + كورنر وإند بيد مفعّلين تلقائياً',
                 boardIds: { white: 1, green: 2, red: 3 },
                 angleId: 94, omegaId: 93, cId: 92, includes_tish: true, auto_beads: true
             },
             {
-                id: 'pro', name: 'الباقة الاحترافية (الملكية)', badge: 'أعلى متانة',
+                id: 'pro', name: 'ملكية', badge: 'أعلى متانة',
                 spec: 'صاج جولدن ميتال 0.60 مم + ألواح كناوف 3م + تيش + كورنر وإند بيد مفعّلين تلقائياً',
                 boardIds: { white: 1, green: 2, red: 3 },
                 angleId: 97, omegaId: 96, cId: 95, includes_tish: true, auto_beads: true
@@ -669,7 +669,7 @@
                     if (addons.corner) activeNames.push('كورنر بيد');
                     if (addons.endBead) activeNames.push('إند بيد');
 
-                    const waText = `مرحباً داركم، أستفسر عن ${pkg.name} (ألواح: ${colorInfo.label})${activeNames.length ? ' + إضافات: ' + activeNames.join('، ') : ''} — مسطح ${res.flatPrice} ج/م² | طولي ${res.covePrice} ج/م.ط`;
+                    const waText = `مرحباً داركم، أستفسر عن باقة ${pkg.name} (ألواح: ${colorInfo.label})${activeNames.length ? ' + إضافات: ' + activeNames.join('، ') : ''} — مسطح ${res.flatPrice} ج/م² | طولي ${res.covePrice} ج/م.ط`;
 
                     return `
                         <div class="glass-panel rounded-2xl p-5 shadow-md hover:shadow-xl transition flex flex-col justify-between border-t-4 ${pkg.popular ? 'border-gold ring-2 ring-gold/50 shadow-lg shadow-gold/20' : (pkg.id==='pro'?'border-gold':(pkg.id==='premium'?'border-green-600':'border-primary'))}">
@@ -677,7 +677,7 @@
                                 <div class="flex justify-between items-start gap-2 mb-2">
                                     <div>
                                         ${pkg.badge ? `<span class="text-[11px] font-bold ${pkg.popular ? 'bg-gold text-primaryDark' : 'text-primary bg-primary/10'} px-2.5 py-0.5 rounded-full">${pkg.badge}</span>` : ''}
-                                        <h3 class="text-lg font-black text-primaryDark mt-1.5">${pkg.name}</h3>
+                                        <h3 class="text-lg font-black text-primaryDark mt-1.5">باقة ${pkg.name}</h3>
                                     </div>
                                     <span class="${colorInfo.cls} text-[11px] font-bold px-2.5 py-1 rounded-lg whitespace-nowrap">${colorInfo.label}</span>
                                 </div>
@@ -1162,7 +1162,7 @@
                                 <div class="text-xs font-black text-primaryDark">⚡ تحويل سريع من مقاسات الغرف 2D أعلاه:</div>
                                 <div class="grid grid-cols-2 gap-2">
                                     <select onchange="app.quoteDraft.pkgId=this.value" class="border rounded-lg px-2 py-1.5 text-xs font-bold bg-white">
-                                        ${PACKAGES_DEF.map(p=>`<option value="${p.id}" ${q.pkgId===p.id?'selected':''}>${p.name}</option>`).join('')}
+                                        ${PACKAGES_DEF.map(p=>`<option value="${p.id}" ${q.pkgId===p.id?'selected':''}>باقة ${p.name}</option>`).join('')}
                                     </select>
                                     <select onchange="app.quoteDraft.color=this.value" class="border rounded-lg px-2 py-1.5 text-xs font-bold bg-white">
                                         <option value="white" ${q.color==='white'?'selected':''}>⚪ أبيض</option>
@@ -1180,8 +1180,8 @@
                                     <input type="text" placeholder="رقم الموبايل" value="${q.phone}" onchange="app.quoteDraft.phone=this.value" class="border-2 rounded-xl px-3 py-2 text-xs font-bold">
                                 </div>
                                 <select id="q-item-type" class="w-full border-2 rounded-xl px-2 py-2 text-xs font-bold">
-                                    ${PACKAGES_DEF.map(p=>`<option value="flat_${p.id}">سقف مسطح — ${p.name}</option>`).join('')}
-                                    ${PACKAGES_DEF.map(p=>`<option value="cove_${p.id}">بيت نور طولي — ${p.name}</option>`).join('')}
+                                    ${PACKAGES_DEF.map(p=>`<option value="flat_${p.id}">سقف مسطح — باقة ${p.name}</option>`).join('')}
+                                    ${PACKAGES_DEF.map(p=>`<option value="cove_${p.id}">بيت نور طولي — باقة ${p.name}</option>`).join('')}
                                     <option value="wall_w111_7_c40">حائط قاطع W111 (7سم – 0.40 – كناوف)</option>
                                     <option value="cem_wall1_7_117">سيمنت بورد 12مم جي بورد (حائط 7سم وجه)</option>
                                     <option value="shadow_normal">شادو جاب عادي (م.ط)</option>
@@ -1290,7 +1290,7 @@
                     if (rm.type === 'ceiling') {
                         const area = Number((Lm * Wm).toFixed(2));
                         const perim = Number((2 * (Lm + Wm)).toFixed(2));
-                        q.items.push({ label: `${rm.name} — سقف فلات (${pkg.name} ${colorLbl})`, unit: 'م²', qty: area, unitCost: rBase.flatCost, unitSell: rBase.flatPrice });
+                        q.items.push({ label: `${rm.name} — سقف فلات (باقة ${pkg.name} ${colorLbl})`, unit: 'م²', qty: area, unitCost: rBase.flatCost, unitSell: rBase.flatPrice });
                         if (rm.shadow === 'normal') {
                             const sh = Engine.addonUnit(ds, 'shadow');
                             q.items.push({ label: `${rm.name} — شادو جاب عادي محيطي`, unit: 'م.ط', qty: perim, unitCost: sh.costLm, unitSell: sh.sellLm });
@@ -1300,7 +1300,7 @@
                         }
                     } else if (rm.type === 'cove') {
                         const lm = Number(Lm.toFixed(2));
-                        q.items.push({ label: `${rm.name} — بيت نور طولي (${pkg.name} ${colorLbl})`, unit: 'م.ط', qty: lm, unitCost: rBase.coveCost, unitSell: rBase.covePrice });
+                        q.items.push({ label: `${rm.name} — بيت نور طولي (باقة ${pkg.name} ${colorLbl})`, unit: 'م.ط', qty: lm, unitCost: rBase.coveCost, unitSell: rBase.covePrice });
                         if (rm.shadow === 'normal') {
                             const sh = Engine.addonUnit(ds, 'shadow');
                             q.items.push({ label: `${rm.name} — شادو جاب عادي`, unit: 'م.ط', qty: lm, unitCost: sh.costLm, unitSell: sh.sellLm });
@@ -1335,10 +1335,10 @@
                 let item = null;
                 if (val.startsWith('flat_')) {
                     const pid = val.replace('flat_', ''), p = PACKAGES_DEF.find(x=>x.id===pid), r = Engine.calcPackage(ds, pid, this.quoteDraft.color, p.auto_beads ? {corner:true,endBead:true} : {});
-                    item = { label: `سقف مسطح — ${p.name}`, unit: 'م²', qty, unitCost: r.flatCost, unitSell: r.flatPrice };
+                    item = { label: `سقف مسطح — باقة ${p.name}`, unit: 'م²', qty, unitCost: r.flatCost, unitSell: r.flatPrice };
                 } else if (val.startsWith('cove_')) {
                     const pid = val.replace('cove_', ''), p = PACKAGES_DEF.find(x=>x.id===pid), r = Engine.calcPackage(ds, pid, this.quoteDraft.color, p.auto_beads ? {corner:true,endBead:true} : {});
-                    item = { label: `بيت نور طولي — ${p.name}`, unit: 'م.ط', qty, unitCost: r.coveCost, unitSell: r.covePrice };
+                    item = { label: `بيت نور طولي — باقة ${p.name}`, unit: 'م.ط', qty, unitCost: r.coveCost, unitSell: r.covePrice };
                 } else if (val === 'wall_w111_7_c40') {
                     const r = Engine.calcWall(ds, { system:'w111', width:'7', steel:'c40', brand:'knauf', color:'white', rockwool:false });
                     item = { label: 'قاطع W111 (7سم – 0.40 – كناوف)', unit: 'م²', qty, unitCost: r.totalCost, unitSell: r.sellPrice };
@@ -1801,7 +1801,7 @@
                 const total = res.missing ? null : Math.round(res.flatPrice * s.area + res.covePrice * (s.cove || 0));
                 const colorLbl = { white: 'أبيض', green: 'أخضر', red: 'أحمر' }[s.color];
                 const pkg = PACKAGES_DEF.find(p => p.id === s.pkgId);
-                const waText = `مرحباً داركم، حسبت من التطبيق: ${pkg.name} (${colorLbl}) لمساحة ${s.area} م²${s.cove ? ' + ' + s.cove + ' م.ط بيت نور' : ''} ≈ ${total ? total.toLocaleString() : ''} ج — عايز معاينة`;
+                const waText = `مرحباً داركم، حسبت من التطبيق: باقة ${pkg.name} (${colorLbl}) لمساحة ${s.area} م²${s.cove ? ' + ' + s.cove + ' م.ط بيت نور' : ''} ≈ ${total ? total.toLocaleString() : ''} ج — عايز معاينة`;
                 container.innerHTML = `
                     <div class="max-w-2xl mx-auto">
                         <div class="text-center mb-6">
@@ -1820,7 +1820,7 @@
                             </div>
                             <div>
                                 <div class="text-xs font-extrabold text-primary mb-2">2. اختار الباقة:</div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${PACKAGES_DEF.map(p => `<button onclick="app.calcSel.pkgId='${p.id}'; app.renderCalc(document.getElementById('main-content'))" class="py-2.5 px-3 rounded-xl border-2 text-xs font-bold text-right ${s.pkgId===p.id?'border-primary bg-primary text-white':'border-gray-200'}">${p.name}</button>`).join('')}</div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${PACKAGES_DEF.map(p => `<button onclick="app.calcSel.pkgId='${p.id}'; app.renderCalc(document.getElementById('main-content'))" class="py-2.5 px-3 rounded-xl border-2 text-xs font-bold text-right ${s.pkgId===p.id?'border-primary bg-primary text-white':'border-gray-200'}">باقة ${p.name}</button>`).join('')}</div>
                             </div>
                             <div>
                                 <div class="text-xs font-extrabold text-primary mb-2">3. لون الألواح:</div>
