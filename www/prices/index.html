@@ -116,15 +116,7 @@
         </div>
     </nav>
 
-    <!-- Admin Navigation (Simulator REMOVED, Quotes MERGED with Worker 2D) -->
-    <nav id="admin-nav" class="hidden fixed bottom-0 w-full bg-white border-t-2 border-primary z-40 safe-area-bottom md:top-[66px] md:bottom-auto md:border-b md:border-t-0 shadow-md">
-        <div class="max-w-7xl mx-auto flex justify-around md:justify-center md:gap-5 items-center h-14 text-[11px] md:text-sm font-bold overflow-x-auto no-scrollbar px-2">
-    <a href="https://darkom-pricing.darkomegy.workers.dev/admin" target="_blank" rel="noopener" class="h-full px-3 flex items-center gap-1 whitespace-nowrap text-primary font-black">⚙️ إدارة الأسعار (السيرفر)</a>
-            <button data-admin="worker_quotes" onclick="app.adminNavigate('worker_quotes')" class="admin-nav-item h-full px-3 flex items-center gap-1 whitespace-nowrap text-gray-600">🛠️ الصنايعي 2D والمقايسات</button>
-            
-            <button onclick="app.logoutAdmin()" class="text-red-600 hover:bg-red-50 h-full px-3 flex items-center gap-1 whitespace-nowrap">🚪 خروج</button>
-        </div>
-    </nav>
+    <nav id="admin-nav" class="hidden fixed bottom-0 w-full bg-white border-t-2 border-primary z-40 safe-area-bottom md:top-[66px] md:bottom-auto md:border-b md:border-t-0 shadow-md"></nav>
 
     <!-- Main Content Area -->
     <main id="main-content" class="max-w-7xl mx-auto px-4 py-4 min-h-screen">
@@ -198,6 +190,12 @@
             faq: ['أسئلة شائعة عن الجبس بورد والضمان والتركيب | داركم', 'إجابات عن أسئلة العملاء حول أسعار الجبس بورد والضمان ومدة التركيب وطريقة المعاينة.']
         };
         const ROUTES = { home: '/', prices: '/prices/', portfolio: '/works/', calc: '/calc/', faq: '/faq/' };
+        const ADMIN_NAV_HTML = `<div class="max-w-7xl mx-auto flex justify-around md:justify-center md:gap-5 items-center h-14 text-[11px] md:text-sm font-bold overflow-x-auto no-scrollbar px-2">
+    <a href="https://darkom-pricing.darkomegy.workers.dev/admin" target="_blank" rel="noopener" class="h-full px-3 flex items-center gap-1 whitespace-nowrap text-primary font-black">⚙️ إدارة الأسعار (السيرفر)</a>
+            <button data-admin="worker_quotes" onclick="app.adminNavigate('worker_quotes')" class="admin-nav-item h-full px-3 flex items-center gap-1 whitespace-nowrap text-gray-600">🛠️ الصنايعي 2D والمقايسات</button>
+            
+            <button onclick="app.logoutAdmin()" class="text-red-600 hover:bg-red-50 h-full px-3 flex items-center gap-1 whitespace-nowrap">🚪 خروج</button>
+        </div>`;
         const DEFAULT_BIZ_SUB = 'DARKOM GYPSUM PRO — أسقف وحوائط وعزل';
         const BUSINESS_PHONE = '01025013991';
         const BUSINESS_PHONE_INTL = '201025013991';
@@ -580,7 +578,8 @@
                 document.getElementById('public-nav').classList.toggle('hidden', store.isAdmin);
                 const fc = document.getElementById('float-contact'); if (fc) fc.style.display = store.isAdmin ? 'none' : '';
                 document.getElementById('desktop-nav').style.display = store.isAdmin ? 'none' : '';
-                document.getElementById('admin-nav').classList.toggle('hidden', !store.isAdmin);
+                const an = document.getElementById('admin-nav'); if (store.isAdmin && !an.dataset.ready) { an.innerHTML = ADMIN_NAV_HTML; an.dataset.ready = '1'; }
+                an.classList.toggle('hidden', !store.isAdmin);
                 document.getElementById('admin-badge').classList.toggle('hidden', !store.isAdmin);
             },
             openContact() {
@@ -994,6 +993,7 @@
             // WORKER 2D CALCULATOR (+ INTEGRATED QUOTATIONS IN ADMIN MODE!)
             // =================================================================
             renderWorker(container, isAdminMode = false) {
+                if (!isAdminMode || !store.isAdmin) { this.navigate('home'); return; } // client view: no craftsman calculator, admin only
                 const room = this.workerRooms.find(r => r.id === this.activeRoomId) || this.workerRooms[0];
                 this.activeRoomId = room.id;
                 const totals = this.computeWorkerTotals();
