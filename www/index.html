@@ -26,28 +26,10 @@
     <link rel="icon" type="image/png" href="icons/icon-192.png">
     <link rel="apple-touch-icon" href="icons/icon-192.png">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
-    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="tailwind.css">
     <script defer src="vendor/html2canvas.min.js"></script>
     <script defer src="vendor/jspdf.umd.min.js"></script>
     <script defer src="vendor/qrcode.js"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        primary: '#1E4D2B',
-                        primaryDark: '#14351D',
-                        gold: '#F0CE41',
-                        goldDark: '#D9B31E',
-                        lightBg: '#F8FAFC'
-                    },
-                    fontFamily: {
-                        cairo: ['Cairo', 'sans-serif'],
-                    }
-                }
-            }
-        }
-    </script>
     <style>
         body { font-family: 'Cairo', sans-serif; background-color: #F8FAFC; -webkit-tap-highlight-color: transparent; }
         .safe-area-bottom { padding-bottom: env(safe-area-inset-bottom, 12px); }
@@ -214,6 +196,14 @@
             { name: 'أخضر رمادي', primary: '#6E8F84', light: '#E8F0ED', thead: '#D3E2DC', accent: '#EAE3BE', dark: '#34524A', sub: '#86A79B' },
             { name: 'رملي', primary: '#9C8B73', light: '#F3EFE8', thead: '#E5DDCF', accent: '#E8DFBC', dark: '#574B3A', sub: '#A89A84' }
         ];
+        const SEO_META = {
+            home: ['تركيب أسقف جبس بورد في الجيزة والقاهرة | داركم للجبس بورد', 'مستويات أسقف جبس بورد معلقة بسعر المتر المسطح والطولي، توريد وتركيب وضمان سنة في الجيزة و6 أكتوبر والشيخ زايد والهرم وفيصل والقاهرة.'],
+            prices: ['أسعار حوائط وتجاليد وسيمنت بورد جبس بورد | داركم', 'أسعار الحوائط والتجاليد والسيمنت بورد وبلاطات 60×60 بالمتر، توريد وتركيب في الجيزة والقاهرة.'],
+            calc: ['احسب سعر سقف الجبس بورد لشقتك | داركم', 'احسب تكلفة سقف الجبس بورد لشقتك بالمتر المربع والمتر الطولي وجرّب الإضافات فوراً.'],
+            portfolio: ['أعمالنا وخدماتنا في الجبس بورد | داركم', 'شاهد صور من أعمال داركم في تركيب الأسقف والحوائط الجبس بورد وخدماتنا.'],
+            faq: ['أسئلة شائعة عن الجبس بورد والضمان والتركيب | داركم', 'إجابات عن أسئلة العملاء حول أسعار الجبس بورد والضمان ومدة التركيب وطريقة المعاينة.']
+        };
+        const ROUTES = { home: '/', prices: '/prices/', portfolio: '/works/', calc: '/calc/', faq: '/faq/' };
         const DEFAULT_BIZ_SUB = 'DARKOM GYPSUM PRO — أسقف وحوائط وعزل';
         const BUSINESS_PHONE = '01025013991';
         const BUSINESS_PHONE_INTL = '201025013991';
@@ -589,7 +579,8 @@
                     document.getElementById('pwa-install-btn')?.classList.remove('hidden');
                 });
                 this.updateNavVisibility();
-                if (store.isAdmin) this.adminNavigate('worker_quotes'); else this.navigate('home');
+                if (store.isAdmin) this.adminNavigate('worker_quotes'); else this.navigate(this.viewFromPath(), true);
+                window.addEventListener('popstate', () => { if (!store.isAdmin) this.navigate(this.viewFromPath(), true); });
             },
             updateNavVisibility() {
                 document.getElementById('public-nav').classList.toggle('hidden', store.isAdmin);
@@ -623,20 +614,26 @@
                 document.querySelectorAll('.nav-item').forEach(x => x.classList.toggle('active', x.dataset.view === this.currentView || (x.dataset.view === 'home' && ['faq'].includes(this.currentView))));
             },
             seoFor(view) {
-                const S = {
-                    home: ['تركيب أسقف جبس بورد في الجيزة والقاهرة | داركم للجبس بورد', 'مستويات أسقف جبس بورد معلقة بسعر المتر المسطح والطولي، توريد وتركيب وضمان سنة في الجيزة و6 أكتوبر والشيخ زايد والهرم وفيصل والقاهرة.'],
-                    prices: ['أسعار حوائط وتجاليد وسيمنت بورد جبس بورد | داركم', 'أسعار الحوائط والتجاليد والسيمنت بورد وبلاطات 60×60 بالمتر، توريد وتركيب في الجيزة والقاهرة.'],
-                    calc: ['احسب سعر سقف الجبس بورد لشقتك | داركم', 'احسب تكلفة سقف الجبس بورد لشقتك بالمتر المربع والمتر الطولي وجرّب الإضافات فوراً.'],
-                    portfolio: ['أعمالنا وخدماتنا في الجبس بورد | داركم', 'شاهد صور من أعمال داركم في تركيب الأسقف والحوائط الجبس بورد وخدماتنا.'],
-                    faq: ['أسئلة شائعة عن الجبس بورد والضمان والتركيب | داركم', 'إجابات عن أسئلة العملاء حول أسعار الجبس بورد والضمان ومدة التركيب وطريقة المعاينة.']
-                }[view] || null;
+                const S = SEO_META[view] || null;
                 if (!S) return;
                 document.title = S[0];
                 const m = document.querySelector('meta[name="description"]'); if (m) m.setAttribute('content', S[1]);
                 const og = document.querySelector('meta[property="og:title"]'); if (og) og.setAttribute('content', S[0]);
+                const cl = document.querySelector('link[rel="canonical"]');
+                if (cl && ROUTES[view]) { const u = new URL(cl.getAttribute('href')).origin + ROUTES[view]; cl.setAttribute('href', u); const ou = document.querySelector('meta[property="og:url"]'); if (ou) ou.setAttribute('content', u); }
             },
-            navigate(view) {
+            viewFromPath() {
+                const seg = (location.pathname || '/').split('/').filter(Boolean)[0] || '';
+                const map = { prices: 'prices', works: 'portfolio', calc: 'calc', faq: 'faq' };
+                return map[seg] || 'home';
+            },
+            pushRoute(view) {
+                if (window.Capacitor || !/^https?:$/.test(location.protocol) || !ROUTES[view]) return;
+                if (location.pathname !== ROUTES[view]) { try { history.pushState({ view }, '', ROUTES[view]); } catch (e) {} }
+            },
+            navigate(view, fromPop) {
                 this.seoFor(view);
+                if (!fromPop) this.pushRoute(view);
                 this.currentView = view; const cs = document.getElementById('contact-sheet'); if (cs) cs.remove();
                 const main = document.getElementById('main-content');
                 main.innerHTML = ''; main.className = "max-w-7xl mx-auto px-4 py-4 min-h-screen fade-in";
