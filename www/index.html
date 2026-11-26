@@ -43,6 +43,10 @@
         .nav-item svg { transition: transform .15s; }
         .nav-item.active { color: #143620 !important; font-weight: 900; }
         .nav-item.active svg { transform: scale(1.3); }
+        #packages-grid{display:flex;flex-wrap:wrap;justify-content:center;gap:1.25rem}
+        #packages-grid>*{width:100%}
+        @media(min-width:768px){#packages-grid>*{width:calc((100% - 1.25rem)/2)}}
+        @media(min-width:1024px){#packages-grid>*{width:calc((100% - 2.5rem)/3)}}
         .nav-item.active:not(.nav-home) svg { margin-bottom: 3px; }
         .nav-item.nav-contact { color: #B08A12 !important; }
         .nav-item.nav-contact.active { color: #7A5F08 !important; }
@@ -620,7 +624,7 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="packages-grid"></div>
+                    <div id="packages-grid"></div>
 
                     <div class="mt-6 mb-20 md:mb-4">
                         <button onclick="app.navigate('prices')" class="w-full bg-gold text-primaryDark px-5 py-3.5 rounded-xl font-extrabold text-sm shadow hover:bg-goldDark transition">أسعار الحوائط والسيمنت و60×60 ←</button>
