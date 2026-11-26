@@ -117,11 +117,9 @@
     <!-- Admin Navigation (Simulator REMOVED, Quotes MERGED with Worker 2D) -->
     <nav id="admin-nav" class="hidden fixed bottom-0 w-full bg-white border-t-2 border-primary z-40 safe-area-bottom md:top-[66px] md:bottom-auto md:border-b md:border-t-0 shadow-md">
         <div class="max-w-7xl mx-auto flex justify-around md:justify-center md:gap-5 items-center h-14 text-[11px] md:text-sm font-bold overflow-x-auto no-scrollbar px-2">
-            <button data-admin="materials" onclick="app.adminNavigate('materials')" class="admin-nav-item active h-full px-3 flex items-center gap-1 whitespace-nowrap text-gray-600">📦 الخامات (142)</button>
-            <button data-admin="labor" onclick="app.adminNavigate('labor')" class="admin-nav-item h-full px-3 flex items-center gap-1 whitespace-nowrap text-gray-600">👷 المصنعيات والأزرار</button>
-            <button data-admin="packages" onclick="app.adminNavigate('packages')" class="admin-nav-item h-full px-3 flex items-center gap-1 whitespace-nowrap text-gray-600">🎯 الباقات والأسعار والنشر</button>
+    <a href="https://darkom-pricing.darkomegy.workers.dev/admin" target="_blank" rel="noopener" class="h-full px-3 flex items-center gap-1 whitespace-nowrap text-primary font-black">⚙️ إدارة الأسعار (السيرفر)</a>
             <button data-admin="worker_quotes" onclick="app.adminNavigate('worker_quotes')" class="admin-nav-item h-full px-3 flex items-center gap-1 whitespace-nowrap text-gray-600">🛠️ الصنايعي 2D والمقايسات</button>
-            <span class="text-[10px] text-red-600 font-bold whitespace-nowrap px-2">⚠️ تعديلات الإدارة تُحفظ على هذا الجهاز فقط</span>
+            
             <button onclick="app.logoutAdmin()" class="text-red-600 hover:bg-red-50 h-full px-3 flex items-center gap-1 whitespace-nowrap">🚪 خروج</button>
         </div>
     </nav>
@@ -164,9 +162,8 @@
         // =====================================================================
         // 1. MASTER CATALOG (130 APPROVED ITEMS + 12 OPEN UNPRICED SLOTS)
         // =====================================================================
-        const STORAGE_VERSION = 'darkom_v14_rev128_2026';
-        const APP_VERSION = '1.2.8';
-        const REMOTE_CONFIG_URL = 'https://raw.githubusercontent.com/darkomegy-lab/darkom-app/main/prices.json';
+        const STORAGE_VERSION = 'darkom_v15_srv_2026';
+        const APP_VERSION = '1.3.0';
         const BUSINESS_PHONE = '01025013991';
         const BUSINESS_PHONE_INTL = '201025013991';
         const MAPS_URL = 'https://maps.google.com/?q=' + encodeURIComponent('الحي السابع، الشيخ زايد، محافظة الجيزة');
@@ -175,231 +172,211 @@
         const WORKING_HOURS = 'يومياً من 9 صباحاً حتى 10 مساءً';
         const SERVICE_AREAS = ['الشيخ زايد', '6 أكتوبر', 'حدائق الأهرام', 'المهندسين', 'التجمع الخامس', 'المعادي', 'مدينة نصر', 'كل القاهرة الكبرى والجيزة'];
         const SOCIAL_LINKS = { facebook: 'https://www.facebook.com/share/1MJ87JwGCr/', instagram: 'https://www.instagram.com/darkomegy', tiktok: '' }; // تُملأ عند توفر روابط صفحات النشاط
-        const ADMIN_PIN = '3100355'; // رمز دخول لوحة الإدارة - غيّره من هنا
+                const PRICING_API = 'https://darkom-pricing.darkomegy.workers.dev';
+        let PRICE_STATE = { catalog: null, costs: null, version: 0 };
+        const CATALOG_CACHE_KEY = 'darkom_catalog_v1';
 
-        // تحميل أسعار محدثة عن بعد (prices.json في المستودع) قبل بناء المتجر
-        async function applyRemoteConfig() {
-            const r = await fetch(REMOTE_CONFIG_URL + '?t=' + Date.now(), { cache: 'no-store' });
-            if (!r.ok) return;
-            const rc = await r.json();
-            if (rc.materials) DEFAULT_MATERIALS.forEach(m => { const p = rc.materials[m.id]; if (p != null && !isNaN(Number(p))) m.price = Number(p); });
-            if (rc.labor) Object.keys(DEFAULT_LABOR).forEach(k => { if (rc.labor[k] != null && !isNaN(Number(rc.labor[k]))) DEFAULT_LABOR[k] = Number(rc.labor[k]); });
-            if (rc.config) { const ao = { ...DEFAULT_CONFIG.addon_overrides, ...(rc.config.addon_overrides || {}) }; Object.assign(DEFAULT_CONFIG, rc.config, { addon_overrides: ao }); }
-            if (rc.app_version) {
-                // مقارنة رقمية صحيحة للإصدارات (1.1.10 > 1.1.2)
-                const parseV = v => String(v).split('.').map(n => parseInt(n, 10) || 0);
-                const rv = parseV(rc.app_version), lv = parseV(APP_VERSION);
-                let newer = false;
-                for (let i = 0; i < Math.max(rv.length, lv.length); i++) {
-                    const d = (rv[i] || 0) - (lv[i] || 0);
-                    if (d !== 0) { newer = d > 0; break; }
-                }
-                // التنبيه يظهر فقط داخل تطبيق أندرويد (Capacitor) - نسخة الويب تتحدث تلقائياً
-                const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
-                if (newer && isNative) window.__darkomUpdate = { version: rc.app_version, url: rc.apk_url || 'https://github.com/darkomegy-lab/darkom-app/releases/latest' };
+        // الأسعار تأتي من السيرفر (أسعار البيع فقط). نسخة مخزنة + نسخة مدمجة للعمل بدون إنترنت.
+        function setCatalog(data) {
+            if (!data || !data.catalog || !data.catalog.packages) return false;
+            PRICE_STATE.catalog = data.catalog; PRICE_STATE.version = data.version || 0;
+            return true;
+        }
+        async function loadCatalog() {
+            let ok = false;
+            try { ok = setCatalog(JSON.parse(localStorage.getItem(CATALOG_CACHE_KEY) || 'null')); } catch (e) {}
+            if (!ok) {
+                try { const r = await fetch('catalog.default.json'); if (r.ok) ok = setCatalog(await r.json()); } catch (e) {}
             }
+            return ok;
+        }
+        async function refreshCatalog() {
+            try {
+                const r = await fetch(PRICING_API + '/api/prices', { cache: 'no-store' });
+                if (!r.ok) return false;
+                const data = await r.json();
+                if (!setCatalog(data)) return false;
+                localStorage.setItem(CATALOG_CACHE_KEY, JSON.stringify(data));
+                if (data.app_version) {
+                    const parseV = v => String(v).split('.').map(n => parseInt(n, 10) || 0);
+                    const rv = parseV(data.app_version), lv = parseV(APP_VERSION);
+                    let newer = false;
+                    for (let i = 0; i < Math.max(rv.length, lv.length); i++) { const d = (rv[i] || 0) - (lv[i] || 0); if (d !== 0) { newer = d > 0; break; } }
+                    const isNative = !!(window.Capacitor && window.Capacitor.isNativePlatform && window.Capacitor.isNativePlatform());
+                    if (newer && isNative) window.__darkomUpdate = { version: data.app_version, url: data.apk_url || 'https://github.com/darkomegy-lab/darkom-app/releases/latest' };
+                }
+                return true;
+            } catch (e) { return false; }
+        }
+        async function loadCosts() {
+            const t = sessionStorage.getItem('darkom_admin_token');
+            if (!t) return false;
+            try {
+                const r = await fetch(PRICING_API + '/api/admin/costs', { headers: { Authorization: 'Bearer ' + t }, cache: 'no-store' });
+                if (r.status === 401) { sessionStorage.removeItem('darkom_admin_token'); sessionStorage.removeItem('darkom_admin'); return false; }
+                if (!r.ok) return false;
+                const j = await r.json(); PRICE_STATE.costs = j.costs || j; return true;
+            } catch (e) { return false; }
         }
 
         const DEFAULT_MATERIALS = [
             // ألواح جبس (1-19)
-            {id:1, cat:"ألواح جبس", name:"أبيض كناوف 3م (12.50 مم)", unit:"لوح 3.60م²", price:450},
-            {id:2, cat:"ألواح جبس", name:"أخضر كناوف 3م (12.50 مم)", unit:"لوح 3.60م²", price:510},
-            {id:3, cat:"ألواح جبس", name:"أحمر كناوف 3م (12.50 مم)", unit:"لوح 3.60م²", price:535},
-            {id:4, cat:"ألواح جبس", name:"أبيض كناوف 2.4م (12.50 مم)", unit:"لوح 2.88م²", price:370},
-            {id:5, cat:"ألواح جبس", name:"أبيض جيبورد 3م (12.50 مم)", unit:"لوح 3.60م²", price:395},
-            {id:6, cat:"ألواح جبس", name:"أخضر جيبورد 3م (12.50 مم)", unit:"لوح 3.60م²", price:450},
-            {id:7, cat:"ألواح جبس", name:"أحمر جيبورد 3م (12.50 مم)", unit:"لوح 3.60م²", price:490},
-            {id:8, cat:"ألواح جبس", name:"أحمر جيبورد 2.40م", unit:"لوح 2.88م²", price:380},
-            {id:9, cat:"ألواح جبس", name:"أبيض جيبورد 2.40م (12.50 مم)", unit:"لوح 2.88م²", price:335},
-            {id:10, cat:"ألواح جبس", name:"أبيض جيبورد 2.50م (12.50 مم)", unit:"لوح 3.00م²", price:310},
-            {id:11, cat:"ألواح جبس", name:"أبيض عثمان 3م (12.50 مم)", unit:"لوح 3.60م²", price:325},
-            {id:12, cat:"ألواح جبس", name:"أخضر عثمان 3م (12.50 مم)", unit:"لوح 3.60م²", price:420},
-            {id:13, cat:"ألواح جبس", name:"أحمر عثمان 3م (12.50 مم)", unit:"لوح 3.60م²", price:425},
-            {id:14, cat:"ألواح جبس", name:"أبيض جيبروك (بلاكو) 3م", unit:"لوح 3.60م²", price:425},
-            {id:15, cat:"ألواح جبس", name:"أخضر بلاكو 3م", unit:"لوح 3.60م²", price:485},
-            {id:16, cat:"ألواح جبس", name:"أحمر بلاكو 3م", unit:"لوح 3.60م²", price:510},
-            {id:17, cat:"ألواح جبس", name:"أبيض تاي بورد الصيني", unit:"لوح", price:330},
-            {id:18, cat:"ألواح جبس", name:"أبيض سولد 3م (12.50 مم)", unit:"لوح 3.60م²", price:370},
-            {id:19, cat:"ألواح جبس", name:"أخضر سولد 3م (12.50 مم)", unit:"لوح 3.60م²", price:390},
+            {id:1, cat:"ألواح جبس", name:"أبيض كناوف 3م (12.50 مم)", unit:"لوح 3.60م²"},
+            {id:2, cat:"ألواح جبس", name:"أخضر كناوف 3م (12.50 مم)", unit:"لوح 3.60م²"},
+            {id:3, cat:"ألواح جبس", name:"أحمر كناوف 3م (12.50 مم)", unit:"لوح 3.60م²"},
+            {id:4, cat:"ألواح جبس", name:"أبيض كناوف 2.4م (12.50 مم)", unit:"لوح 2.88م²"},
+            {id:5, cat:"ألواح جبس", name:"أبيض جيبورد 3م (12.50 مم)", unit:"لوح 3.60م²"},
+            {id:6, cat:"ألواح جبس", name:"أخضر جيبورد 3م (12.50 مم)", unit:"لوح 3.60م²"},
+            {id:7, cat:"ألواح جبس", name:"أحمر جيبورد 3م (12.50 مم)", unit:"لوح 3.60م²"},
+            {id:8, cat:"ألواح جبس", name:"أحمر جيبورد 2.40م", unit:"لوح 2.88م²"},
+            {id:9, cat:"ألواح جبس", name:"أبيض جيبورد 2.40م (12.50 مم)", unit:"لوح 2.88م²"},
+            {id:10, cat:"ألواح جبس", name:"أبيض جيبورد 2.50م (12.50 مم)", unit:"لوح 3.00م²"},
+            {id:11, cat:"ألواح جبس", name:"أبيض عثمان 3م (12.50 مم)", unit:"لوح 3.60م²"},
+            {id:12, cat:"ألواح جبس", name:"أخضر عثمان 3م (12.50 مم)", unit:"لوح 3.60م²"},
+            {id:13, cat:"ألواح جبس", name:"أحمر عثمان 3م (12.50 مم)", unit:"لوح 3.60م²"},
+            {id:14, cat:"ألواح جبس", name:"أبيض جيبروك (بلاكو) 3م", unit:"لوح 3.60م²"},
+            {id:15, cat:"ألواح جبس", name:"أخضر بلاكو 3م", unit:"لوح 3.60م²"},
+            {id:16, cat:"ألواح جبس", name:"أحمر بلاكو 3م", unit:"لوح 3.60م²"},
+            {id:17, cat:"ألواح جبس", name:"أبيض تاي بورد الصيني", unit:"لوح"},
+            {id:18, cat:"ألواح جبس", name:"أبيض سولد 3م (12.50 مم)", unit:"لوح 3.60م²"},
+            {id:19, cat:"ألواح جبس", name:"أخضر سولد 3م (12.50 مم)", unit:"لوح 3.60م²"},
             // بلاط جبس 60×60 (20-26)
-            {id:20, cat:"بلاط جبس", name:"بلاط جيبورد 7 مم (60×60)", unit:"م²", price:150},
-            {id:21, cat:"بلاط جبس", name:"بلاط جيبورد 9 مم (60×60)", unit:"م²", price:160},
-            {id:22, cat:"بلاط جبس", name:"بلاط جيبورد 12 مم (60×60)", unit:"م²", price:180},
-            {id:23, cat:"بلاط جبس", name:"بلاط كناوف سادة 7 مم (60×60)", unit:"م²", price:150},
-            {id:24, cat:"بلاط جبس", name:"بلاط كناوف ديكوراما 7 مم (60×60)", unit:"م²", price:135},
-            {id:25, cat:"بلاط جبس", name:"بلاط كناوف 9 مم (60×60)", unit:"م²", price:160},
-            {id:26, cat:"بلاط جبس", name:"بلاط كناوف 12 مم (60×60)", unit:"م²", price:165},
+            {id:20, cat:"بلاط جبس", name:"بلاط جيبورد 7 مم (60×60)", unit:"م²"},
+            {id:21, cat:"بلاط جبس", name:"بلاط جيبورد 9 مم (60×60)", unit:"م²"},
+            {id:22, cat:"بلاط جبس", name:"بلاط جيبورد 12 مم (60×60)", unit:"م²"},
+            {id:23, cat:"بلاط جبس", name:"بلاط كناوف سادة 7 مم (60×60)", unit:"م²"},
+            {id:24, cat:"بلاط جبس", name:"بلاط كناوف ديكوراما 7 مم (60×60)", unit:"م²"},
+            {id:25, cat:"بلاط جبس", name:"بلاط كناوف 9 مم (60×60)", unit:"م²"},
+            {id:26, cat:"بلاط جبس", name:"بلاط كناوف 12 مم (60×60)", unit:"م²"},
             // صاج (27-45)
-            {id:27, cat:"صاج", name:"زاوية 0.3 / 0.33", unit:"عود 3م", price:20},
-            {id:28, cat:"صاج", name:"أوميجا 0.3 / 0.33", unit:"عود 3م", price:40},
-            {id:29, cat:"صاج", name:"سي 0.33", unit:"عود 3م", price:30},
-            {id:30, cat:"صاج", name:"زاوية 0.35", unit:"عود 3م", price:23},
-            {id:31, cat:"صاج", name:"أوميجا 0.35", unit:"عود 3م", price:46},
-            {id:32, cat:"صاج", name:"سي (ناعم سي) 0.35", unit:"عود 3م", price:35},
-            {id:33, cat:"صاج", name:"زاوية 0.40", unit:"عود 3م", price:26},
-            {id:34, cat:"صاج", name:"أوميجا 0.40", unit:"عود 3م", price:52},
-            {id:35, cat:"صاج", name:"سي (ناعم سي) 0.40", unit:"عود 3م", price:41},
-            {id:36, cat:"صاج", name:"خشن 5 سم (0.40)", unit:"عود 3م", price:75},
-            {id:37, cat:"صاج", name:"خشن 5 سم (0.35)", unit:"عود 3م", price:65},
-            {id:38, cat:"صاج", name:"ناعم 5 سم (0.40)", unit:"عود 3م", price:65},
-            {id:39, cat:"صاج", name:"ناعم 5 سم (0.35)", unit:"عود 3م", price:55},
-            {id:40, cat:"صاج", name:"خشن 7 سم (0.40)", unit:"عود 3م", price:85},
-            {id:41, cat:"صاج", name:"خشن 7 سم (0.35)", unit:"عود 3م", price:75},
-            {id:42, cat:"صاج", name:"ناعم 7 سم (0.40)", unit:"عود 3م", price:70},
-            {id:43, cat:"صاج", name:"ناعم 7 سم (0.35)", unit:"عود 3م", price:65},
-            {id:44, cat:"صاج", name:"خشن 10 سم (0.40)", unit:"عود 3م", price:115},
-            {id:45, cat:"صاج", name:"ناعم 10 سم (0.40)", unit:"عود 3م", price:105},
+            {id:27, cat:"صاج", name:"زاوية 0.3 / 0.33", unit:"عود 3م"},
+            {id:28, cat:"صاج", name:"أوميجا 0.3 / 0.33", unit:"عود 3م"},
+            {id:29, cat:"صاج", name:"سي 0.33", unit:"عود 3م"},
+            {id:30, cat:"صاج", name:"زاوية 0.35", unit:"عود 3م"},
+            {id:31, cat:"صاج", name:"أوميجا 0.35", unit:"عود 3م"},
+            {id:32, cat:"صاج", name:"سي (ناعم سي) 0.35", unit:"عود 3م"},
+            {id:33, cat:"صاج", name:"زاوية 0.40", unit:"عود 3م"},
+            {id:34, cat:"صاج", name:"أوميجا 0.40", unit:"عود 3م"},
+            {id:35, cat:"صاج", name:"سي (ناعم سي) 0.40", unit:"عود 3م"},
+            {id:36, cat:"صاج", name:"خشن 5 سم (0.40)", unit:"عود 3م"},
+            {id:37, cat:"صاج", name:"خشن 5 سم (0.35)", unit:"عود 3م"},
+            {id:38, cat:"صاج", name:"ناعم 5 سم (0.40)", unit:"عود 3م"},
+            {id:39, cat:"صاج", name:"ناعم 5 سم (0.35)", unit:"عود 3م"},
+            {id:40, cat:"صاج", name:"خشن 7 سم (0.40)", unit:"عود 3م"},
+            {id:41, cat:"صاج", name:"خشن 7 سم (0.35)", unit:"عود 3م"},
+            {id:42, cat:"صاج", name:"ناعم 7 سم (0.40)", unit:"عود 3م"},
+            {id:43, cat:"صاج", name:"ناعم 7 سم (0.35)", unit:"عود 3م"},
+            {id:44, cat:"صاج", name:"خشن 10 سم (0.40)", unit:"عود 3م"},
+            {id:45, cat:"صاج", name:"ناعم 10 سم (0.40)", unit:"عود 3م"},
             // معجون وشريط (46-55)
-            {id:46, cat:"معجون وشريط", name:"شريط ميتال (30 متر)", unit:"لفة 30م", price:105},
-            {id:47, cat:"معجون وشريط", name:"شريط ميتال مثقب", unit:"لفة", price:110},
-            {id:48, cat:"معجون وشريط", name:"فايبر مستورد (90 متر)", unit:"لفة 90م", price:70},
-            {id:49, cat:"معجون وشريط", name:"معجون كناوف (12.5 كجم)", unit:"شيكارة", price:125},
-            {id:50, cat:"معجون وشريط", name:"معجون ممتاز 12 م", unit:"شيكارة", price:170},
-            {id:51, cat:"معجون وشريط", name:"معجون إيزي فيل صغير (12 ك)", unit:"شيكارة", price:140},
-            {id:52, cat:"معجون وشريط", name:"معجون إيزي فيل كبير (25 ك)", unit:"شيكارة", price:260},
-            {id:53, cat:"معجون وشريط", name:"معجون إكسترا فيل", unit:"شيكارة", price:90},
-            {id:54, cat:"معجون وشريط", name:"معجون إكسترا إسمنتي (20 ك)", unit:"شيكارة", price:240},
-            {id:55, cat:"معجون وشريط", name:"جالون معجون سي كوت", unit:"جالون", price:750},
+            {id:46, cat:"معجون وشريط", name:"شريط ميتال (30 متر)", unit:"لفة 30م"},
+            {id:47, cat:"معجون وشريط", name:"شريط ميتال مثقب", unit:"لفة"},
+            {id:48, cat:"معجون وشريط", name:"فايبر مستورد (90 متر)", unit:"لفة 90م"},
+            {id:49, cat:"معجون وشريط", name:"معجون كناوف (12.5 كجم)", unit:"شيكارة"},
+            {id:50, cat:"معجون وشريط", name:"معجون ممتاز 12 م", unit:"شيكارة"},
+            {id:51, cat:"معجون وشريط", name:"معجون إيزي فيل صغير (12 ك)", unit:"شيكارة"},
+            {id:52, cat:"معجون وشريط", name:"معجون إيزي فيل كبير (25 ك)", unit:"شيكارة"},
+            {id:53, cat:"معجون وشريط", name:"معجون إكسترا فيل", unit:"شيكارة"},
+            {id:54, cat:"معجون وشريط", name:"معجون إكسترا إسمنتي (20 ك)", unit:"شيكارة"},
+            {id:55, cat:"معجون وشريط", name:"جالون معجون سي كوت", unit:"جالون"},
             // مسامير وتثبيت (56-76)
-            {id:56, cat:"مسامير وتثبيت", name:"مسمار 25 و35 كيلو", unit:"كيلو", price:100},
-            {id:57, cat:"مسامير وتثبيت", name:"مسمار 25 فوكس (1000)", unit:"علبة", price:140},
-            {id:58, cat:"مسامير وتثبيت", name:"مسمار 35 فوكس (1000)", unit:"علبة", price:150},
-            {id:59, cat:"مسامير وتثبيت", name:"مسمار 25 صن شاين مجلفن", unit:"علبة", price:140},
-            {id:60, cat:"مسامير وتثبيت", name:"مسمار 35 صن شاين مجلفن", unit:"علبة", price:160},
-            {id:61, cat:"مسامير وتثبيت", name:"مسمار ثقة 25 أسود/مجلفن", unit:"علبة", price:140},
-            {id:62, cat:"مسامير وتثبيت", name:"مسمار ثقة 35 أسود/مجلفن", unit:"علبة", price:160},
-            {id:63, cat:"مسامير وتثبيت", name:"مسمار 25 باتا", unit:"علبة", price:200},
-            {id:64, cat:"مسامير وتثبيت", name:"مسمار 35 باتا", unit:"علبة", price:250},
-            {id:65, cat:"مسامير وتثبيت", name:"مسمار سن بنطة (سيمنت 500)", unit:"علبة", price:240},
-            {id:66, cat:"مسامير وتثبيت", name:"مسمار تخويش (25 و35)", unit:"علبة", price:165},
-            {id:67, cat:"مسامير وتثبيت", name:"مسمار تك (1000)", unit:"علبة", price:170},
-            {id:68, cat:"مسامير وتثبيت", name:"إكمون 6مم (100 قطعة)", unit:"علبة", price:120},
-            {id:69, cat:"مسامير وتثبيت", name:"سلك رباط", unit:"كيلو", price:90},
-            {id:70, cat:"مسامير وتثبيت", name:"مسمار جنش (50 قطعة)", unit:"كيلو", price:65},
-            {id:71, cat:"مسامير وتثبيت", name:"تيش 6 مم مستورد (2 متر)", unit:"عود 2م", price:25},
-            {id:72, cat:"مسامير وتثبيت", name:"تيش 6 مم مستورد (3 متر)", unit:"عود 3م", price:38.5},
-            {id:73, cat:"مسامير وتثبيت", name:"فيشر بلاستيك (100 قطعة)", unit:"كيس", price:6},
-            {id:74, cat:"مسامير وتثبيت", name:"صامولة 6 مم (380 قطعة)", unit:"كيلو", price:90},
-            {id:75, cat:"مسامير وتثبيت", name:"عصفورة U", unit:"قطعة", price:1.25},
-            {id:76, cat:"مسامير وتثبيت", name:"عصفورة L", unit:"قطعة", price:2.5},
+            {id:56, cat:"مسامير وتثبيت", name:"مسمار 25 و35 كيلو", unit:"كيلو"},
+            {id:57, cat:"مسامير وتثبيت", name:"مسمار 25 فوكس (1000)", unit:"علبة"},
+            {id:58, cat:"مسامير وتثبيت", name:"مسمار 35 فوكس (1000)", unit:"علبة"},
+            {id:59, cat:"مسامير وتثبيت", name:"مسمار 25 صن شاين مجلفن", unit:"علبة"},
+            {id:60, cat:"مسامير وتثبيت", name:"مسمار 35 صن شاين مجلفن", unit:"علبة"},
+            {id:61, cat:"مسامير وتثبيت", name:"مسمار ثقة 25 أسود/مجلفن", unit:"علبة"},
+            {id:62, cat:"مسامير وتثبيت", name:"مسمار ثقة 35 أسود/مجلفن", unit:"علبة"},
+            {id:63, cat:"مسامير وتثبيت", name:"مسمار 25 باتا", unit:"علبة"},
+            {id:64, cat:"مسامير وتثبيت", name:"مسمار 35 باتا", unit:"علبة"},
+            {id:65, cat:"مسامير وتثبيت", name:"مسمار سن بنطة (سيمنت 500)", unit:"علبة"},
+            {id:66, cat:"مسامير وتثبيت", name:"مسمار تخويش (25 و35)", unit:"علبة"},
+            {id:67, cat:"مسامير وتثبيت", name:"مسمار تك (1000)", unit:"علبة"},
+            {id:68, cat:"مسامير وتثبيت", name:"إكمون 6مم (100 قطعة)", unit:"علبة"},
+            {id:69, cat:"مسامير وتثبيت", name:"سلك رباط", unit:"كيلو"},
+            {id:70, cat:"مسامير وتثبيت", name:"مسمار جنش (50 قطعة)", unit:"كيلو"},
+            {id:71, cat:"مسامير وتثبيت", name:"تيش 6 مم مستورد (2 متر)", unit:"عود 2م"},
+            {id:72, cat:"مسامير وتثبيت", name:"تيش 6 مم مستورد (3 متر)", unit:"عود 3م"},
+            {id:73, cat:"مسامير وتثبيت", name:"فيشر بلاستيك (100 قطعة)", unit:"كيس"},
+            {id:74, cat:"مسامير وتثبيت", name:"صامولة 6 مم (380 قطعة)", unit:"كيلو"},
+            {id:75, cat:"مسامير وتثبيت", name:"عصفورة U", unit:"قطعة"},
+            {id:76, cat:"مسامير وتثبيت", name:"عصفورة L", unit:"قطعة"},
             // شادو جاب وإكسسوارات (77-88)
-            {id:77, cat:"شادو جاب وإكسسوارات", name:"شادو جاب صاج (700 جم)", unit:"عود 3م", price:85},
-            {id:78, cat:"شادو جاب وإكسسوارات", name:"شادو جاب عادي (360 جم)", unit:"عود 3م", price:150},
-            {id:79, cat:"شادو جاب وإكسسوارات", name:"شادو جاب وسط (400 جم)", unit:"عود 3م", price:140},
-            {id:80, cat:"شادو جاب وإكسسوارات", name:"شادو جاب محمل (450 جم)", unit:"عود 3م", price:160},
-            {id:81, cat:"شادو جاب وإكسسوارات", name:"شادو جاب محمل ومختوم (500 جم)", unit:"عود 3م", price:172},
-            {id:82, cat:"شادو جاب وإكسسوارات", name:"شادو جاب أسود عادي", unit:"عود 3م", price:160},
-            {id:83, cat:"شادو جاب وإكسسوارات", name:"شادو ليد بروفايل رفيع", unit:"عود 3م", price:330},
-            {id:84, cat:"شادو جاب وإكسسوارات", name:"شادو ليد بروفايل عريض", unit:"عود 3م", price:460},
-            {id:85, cat:"شادو جاب وإكسسوارات", name:"كورنر بيد", unit:"عود 3م", price:25},
-            {id:86, cat:"شادو جاب وإكسسوارات", name:"إند بيد", unit:"عود 3م", price:26},
-            {id:87, cat:"شادو جاب وإكسسوارات", name:"ألترابيد 1 سم", unit:"عود 3م", price:95},
-            {id:88, cat:"شادو جاب وإكسسوارات", name:"ألترابيد 2 سم", unit:"عود 3م", price:110},
+            {id:77, cat:"شادو جاب وإكسسوارات", name:"شادو جاب صاج (700 جم)", unit:"عود 3م"},
+            {id:78, cat:"شادو جاب وإكسسوارات", name:"شادو جاب عادي (360 جم)", unit:"عود 3م"},
+            {id:79, cat:"شادو جاب وإكسسوارات", name:"شادو جاب وسط (400 جم)", unit:"عود 3م"},
+            {id:80, cat:"شادو جاب وإكسسوارات", name:"شادو جاب محمل (450 جم)", unit:"عود 3م"},
+            {id:81, cat:"شادو جاب وإكسسوارات", name:"شادو جاب محمل ومختوم (500 جم)", unit:"عود 3م"},
+            {id:82, cat:"شادو جاب وإكسسوارات", name:"شادو جاب أسود عادي", unit:"عود 3م"},
+            {id:83, cat:"شادو جاب وإكسسوارات", name:"شادو ليد بروفايل رفيع", unit:"عود 3م"},
+            {id:84, cat:"شادو جاب وإكسسوارات", name:"شادو ليد بروفايل عريض", unit:"عود 3م"},
+            {id:85, cat:"شادو جاب وإكسسوارات", name:"كورنر بيد", unit:"عود 3م"},
+            {id:86, cat:"شادو جاب وإكسسوارات", name:"إند بيد", unit:"عود 3م"},
+            {id:87, cat:"شادو جاب وإكسسوارات", name:"ألترابيد 1 سم", unit:"عود 3م"},
+            {id:88, cat:"شادو جاب وإكسسوارات", name:"ألترابيد 2 سم", unit:"عود 3م"},
             // جولدن ميتال أسقف (89-97)
-            {id:89, cat:"أسقف – جولدن ميتال", name:"رئيسي C38 جولدن ميتال 0.4 مم", unit:"عود 3م", price:46.75},
-            {id:90, cat:"أسقف – جولدن ميتال", name:"أوميجا جولدن ميتال 0.4 مم", unit:"عود 3م", price:72.05},
-            {id:91, cat:"أسقف – جولدن ميتال", name:"زاوية جولدن ميتال 0.4 مم", unit:"عود 3م", price:35.20},
-            {id:92, cat:"أسقف – جولدن ميتال", name:"رئيسي C38 جولدن ميتال 0.5 مم", unit:"عود 3م", price:59.73},
-            {id:93, cat:"أسقف – جولدن ميتال", name:"أوميجا جولدن ميتال 0.5 مم", unit:"عود 3م", price:93.06},
-            {id:94, cat:"أسقف – جولدن ميتال", name:"زاوية جولدن ميتال 0.5 مم", unit:"عود 3م", price:47.58},
-            {id:95, cat:"أسقف – جولدن ميتال", name:"رئيسي C38 جولدن ميتال 0.6 مم", unit:"عود 3م", price:74.25},
-            {id:96, cat:"أسقف – جولدن ميتال", name:"أوميجا جولدن ميتال 0.6 مم", unit:"عود 3م", price:116.60},
-            {id:97, cat:"أسقف – جولدن ميتال", name:"زاوية جولدن ميتال 0.6 مم", unit:"عود 3م", price:59.73},
+            {id:89, cat:"أسقف – جولدن ميتال", name:"رئيسي C38 جولدن ميتال 0.4 مم", unit:"عود 3م"},
+            {id:90, cat:"أسقف – جولدن ميتال", name:"أوميجا جولدن ميتال 0.4 مم", unit:"عود 3م"},
+            {id:91, cat:"أسقف – جولدن ميتال", name:"زاوية جولدن ميتال 0.4 مم", unit:"عود 3م"},
+            {id:92, cat:"أسقف – جولدن ميتال", name:"رئيسي C38 جولدن ميتال 0.5 مم", unit:"عود 3م"},
+            {id:93, cat:"أسقف – جولدن ميتال", name:"أوميجا جولدن ميتال 0.5 مم", unit:"عود 3م"},
+            {id:94, cat:"أسقف – جولدن ميتال", name:"زاوية جولدن ميتال 0.5 مم", unit:"عود 3م"},
+            {id:95, cat:"أسقف – جولدن ميتال", name:"رئيسي C38 جولدن ميتال 0.6 مم", unit:"عود 3م"},
+            {id:96, cat:"أسقف – جولدن ميتال", name:"أوميجا جولدن ميتال 0.6 مم", unit:"عود 3م"},
+            {id:97, cat:"أسقف – جولدن ميتال", name:"زاوية جولدن ميتال 0.6 مم", unit:"عود 3م"},
             // جولدن ميتال حوائط (98-109)
-            {id:98, cat:"حوائط – جولدن ميتال", name:"قائم خشن 5 سم جولدن 0.5 مم", unit:"عود 3م", price:115.50},
-            {id:99, cat:"حوائط – جولدن ميتال", name:"قائم خشن 5 سم جولدن 0.6 مم", unit:"عود 3م", price:138.23},
-            {id:100, cat:"حوائط – جولدن ميتال", name:"تراك ناعم 5 سم جولدن 0.5 مم", unit:"عود 3م", price:86.35},
-            {id:101, cat:"حوائط – جولدن ميتال", name:"تراك ناعم 5 سم جولدن 0.6 مم", unit:"عود 3م", price:103.40},
-            {id:102, cat:"حوائط – جولدن ميتال", name:"قائم خشن 7 سم جولدن 0.5 مم", unit:"عود 3م", price:134.20},
-            {id:103, cat:"حوائط – جولدن ميتال", name:"قائم خشن 7 سم جولدن 0.6 مم", unit:"عود 3م", price:161.04},
-            {id:104, cat:"حوائط – جولدن ميتال", name:"تراك ناعم 7 سم جولدن 0.5 مم", unit:"عود 3م", price:105.33},
-            {id:105, cat:"حوائط – جولدن ميتال", name:"تراك ناعم 7 سم جولدن 0.6 مم", unit:"عود 3م", price:126.06},
-            {id:106, cat:"حوائط – جولدن ميتال", name:"قائم خشن 10 سم جولدن 0.5 مم", unit:"عود 3م", price:162.80},
-            {id:107, cat:"حوائط – جولدن ميتال", name:"قائم خشن 10 سم جولدن 0.6 مم", unit:"عود 3م", price:195.14},
-            {id:108, cat:"حوائط – جولدن ميتال", name:"تراك ناعم 10 سم جولدن 0.5 مم", unit:"عود 3م", price:138.33},
-            {id:109, cat:"حوائط – جولدن ميتال", name:"تراك ناعم 10 سم جولدن 0.6 مم", unit:"عود 3م", price:161.04},
+            {id:98, cat:"حوائط – جولدن ميتال", name:"قائم خشن 5 سم جولدن 0.5 مم", unit:"عود 3م"},
+            {id:99, cat:"حوائط – جولدن ميتال", name:"قائم خشن 5 سم جولدن 0.6 مم", unit:"عود 3م"},
+            {id:100, cat:"حوائط – جولدن ميتال", name:"تراك ناعم 5 سم جولدن 0.5 مم", unit:"عود 3م"},
+            {id:101, cat:"حوائط – جولدن ميتال", name:"تراك ناعم 5 سم جولدن 0.6 مم", unit:"عود 3م"},
+            {id:102, cat:"حوائط – جولدن ميتال", name:"قائم خشن 7 سم جولدن 0.5 مم", unit:"عود 3م"},
+            {id:103, cat:"حوائط – جولدن ميتال", name:"قائم خشن 7 سم جولدن 0.6 مم", unit:"عود 3م"},
+            {id:104, cat:"حوائط – جولدن ميتال", name:"تراك ناعم 7 سم جولدن 0.5 مم", unit:"عود 3م"},
+            {id:105, cat:"حوائط – جولدن ميتال", name:"تراك ناعم 7 سم جولدن 0.6 مم", unit:"عود 3م"},
+            {id:106, cat:"حوائط – جولدن ميتال", name:"قائم خشن 10 سم جولدن 0.5 مم", unit:"عود 3م"},
+            {id:107, cat:"حوائط – جولدن ميتال", name:"قائم خشن 10 سم جولدن 0.6 مم", unit:"عود 3م"},
+            {id:108, cat:"حوائط – جولدن ميتال", name:"تراك ناعم 10 سم جولدن 0.5 مم", unit:"عود 3م"},
+            {id:109, cat:"حوائط – جولدن ميتال", name:"تراك ناعم 10 سم جولدن 0.6 مم", unit:"عود 3م"},
             // أبواب كشف (110-114)
-            {id:110, cat:"أبواب كشف", name:"باب كشف 30×30 سم", unit:"قطعة", price:825},
-            {id:111, cat:"أبواب كشف", name:"باب كشف 40×40 سم", unit:"قطعة", price:935},
-            {id:112, cat:"أبواب كشف", name:"باب كشف 50×50 سم", unit:"قطعة", price:1078},
-            {id:113, cat:"أبواب كشف", name:"باب كشف 60×60 سم", unit:"قطعة", price:1265},
-            {id:114, cat:"أبواب كشف", name:"باب كشف 60×120 سم", unit:"قطعة", price:2035},
+            {id:110, cat:"أبواب كشف", name:"باب كشف 30×30 سم", unit:"قطعة"},
+            {id:111, cat:"أبواب كشف", name:"باب كشف 40×40 سم", unit:"قطعة"},
+            {id:112, cat:"أبواب كشف", name:"باب كشف 50×50 سم", unit:"قطعة"},
+            {id:113, cat:"أبواب كشف", name:"باب كشف 60×60 سم", unit:"قطعة"},
+            {id:114, cat:"أبواب كشف", name:"باب كشف 60×120 سم", unit:"قطعة"},
             // سيمنت بورد 1.20×2.40 = 2.88م² (115-120)
-            {id:115, cat:"سيمنت بورد", name:"سيمنت كناوف 12 مم OUT DOOR", unit:"لوح 2.88م²", price:2400},
-            {id:116, cat:"سيمنت بورد", name:"سيمنت كناوف 12 مم IN DOOR", unit:"لوح 2.88م²", price:2350},
-            {id:117, cat:"سيمنت بورد", name:"سيمنت 12 مم جي بورد", unit:"لوح 2.88م²", price:1300},
-            {id:118, cat:"سيمنت بورد", name:"سيمنت 12 مم توب بورد", unit:"لوح 2.88م²", price:1100},
-            {id:119, cat:"سيمنت بورد", name:"سيمنت 9 مم جي بورد", unit:"لوح 2.88م²", price:1100},
-            {id:120, cat:"سيمنت بورد", name:"سيمنت 9 مم توب بورد", unit:"لوح 2.88م²", price:800},
+            {id:115, cat:"سيمنت بورد", name:"سيمنت كناوف 12 مم OUT DOOR", unit:"لوح 2.88م²"},
+            {id:116, cat:"سيمنت بورد", name:"سيمنت كناوف 12 مم IN DOOR", unit:"لوح 2.88م²"},
+            {id:117, cat:"سيمنت بورد", name:"سيمنت 12 مم جي بورد", unit:"لوح 2.88م²"},
+            {id:118, cat:"سيمنت بورد", name:"سيمنت 12 مم توب بورد", unit:"لوح 2.88م²"},
+            {id:119, cat:"سيمنت بورد", name:"سيمنت 9 مم جي بورد", unit:"لوح 2.88م²"},
+            {id:120, cat:"سيمنت بورد", name:"سيمنت 9 مم توب بورد", unit:"لوح 2.88م²"},
             // صاج معتمد كناوف/جيبورد ومستلزمات (121-130)
-            {id:121, cat:"صاج معتمد", name:"زاوية كناوف 0.4 مم", unit:"عود 3م", price:33.75},
-            {id:122, cat:"صاج معتمد", name:"أوميجا كناوف 0.4 مم", unit:"عود 3م", price:76},
-            {id:123, cat:"صاج معتمد", name:"ناعم 38 كناوف 0.4 مم", unit:"عود 3م", price:45},
-            {id:124, cat:"صاج معتمد", name:"زاوية جي بورد 0.5 مم", unit:"عود 3م", price:47.5},
-            {id:125, cat:"صاج معتمد", name:"أوميجا جي بورد 0.5 مم", unit:"عود 3م", price:94},
-            {id:126, cat:"صاج معتمد", name:"ناعم 38 جي بورد 0.5 مم", unit:"عود 3م", price:59},
-            {id:127, cat:"مستلزمات تركيب", name:"فايبر 90م مصري", unit:"لفة 90م", price:50},
-            {id:128, cat:"مستلزمات تركيب", name:"تيش 6 مم مستورد 2م (لفة)", unit:"عود 2م", price:25},
-            {id:129, cat:"مستلزمات تركيب", name:"تيش 6 مم مصري 3م", unit:"عود 3م", price:35},
-            {id:130, cat:"مستلزمات تركيب", name:"تيش 8 مم", unit:"عود", price:30},
+            {id:121, cat:"صاج معتمد", name:"زاوية كناوف 0.4 مم", unit:"عود 3م"},
+            {id:122, cat:"صاج معتمد", name:"أوميجا كناوف 0.4 مم", unit:"عود 3م"},
+            {id:123, cat:"صاج معتمد", name:"ناعم 38 كناوف 0.4 مم", unit:"عود 3م"},
+            {id:124, cat:"صاج معتمد", name:"زاوية جي بورد 0.5 مم", unit:"عود 3م"},
+            {id:125, cat:"صاج معتمد", name:"أوميجا جي بورد 0.5 مم", unit:"عود 3م"},
+            {id:126, cat:"صاج معتمد", name:"ناعم 38 جي بورد 0.5 مم", unit:"عود 3م"},
+            {id:127, cat:"مستلزمات تركيب", name:"فايبر 90م مصري", unit:"لفة 90م"},
+            {id:128, cat:"مستلزمات تركيب", name:"تيش 6 مم مستورد 2م (لفة)", unit:"عود 2م"},
+            {id:129, cat:"مستلزمات تركيب", name:"تيش 6 مم مصري 3م", unit:"عود 3م"},
+            {id:130, cat:"مستلزمات تركيب", name:"تيش 8 مم", unit:"عود"},
             // النواقص (131-142)
-            {id:131, cat:"نواقص (60×60 وعزل)", name:"شاسيه Main Tee 3.60م (60×60)", unit:"عود 3.60م", price:50},
-            {id:132, cat:"نواقص (60×60 وعزل)", name:"شاسيه Cross Tee 1.20م (60×60)", unit:"قطعة 1.20م", price:20},
-            {id:133, cat:"نواقص (60×60 وعزل)", name:"شاسيه Cross Tee 0.60م (60×60)", unit:"قطعة 0.60م", price:12},
-            {id:134, cat:"نواقص (60×60 وعزل)", name:"زاوية محيطية 60×60 (Wall Angle)", unit:"عود 3م", price:22},
-            {id:135, cat:"نواقص (60×60 وعزل)", name:"صوف صخري 50 مم (عزل صوتي)", unit:"م²", price:275},
-            {id:136, cat:"نواقص (60×60 وعزل)", name:"ماجنتيك تراك (مسار إضاءة)", unit:"م.ط", price:300},
-            {id:137, cat:"نواقص (60×60 وعزل)", name:"بلاط صاج 60×60 ظاهر (Lay-in)", unit:"م²", price:290},
-            {id:138, cat:"نواقص (60×60 وعزل)", name:"بلاط ألمنيوم 60×60 ظاهر (Lay-in)", unit:"م²", price:380},
-            {id:139, cat:"نواقص (60×60 وعزل)", name:"بلاط صاج 60×60 مخفي (Clip-in)", unit:"م²", price:300},
-            {id:140, cat:"نواقص (60×60 وعزل)", name:"بلاط ألمنيوم 60×60 مخفي (Clip-in)", unit:"م²", price:400},
-            {id:141, cat:"نواقص (60×60 وعزل)", name:"شاسيه مخفي Clip-in (حامل+C+كلبس)", unit:"م²", price:130},
-            {id:142, cat:"نواقص (60×60 وعزل)", name:"طقم إكسسوار T-Grid جاهز (بديل مجمّع)", unit:"م²", price:100}
+            {id:131, cat:"نواقص (60×60 وعزل)", name:"شاسيه Main Tee 3.60م (60×60)", unit:"عود 3.60م"},
+            {id:132, cat:"نواقص (60×60 وعزل)", name:"شاسيه Cross Tee 1.20م (60×60)", unit:"قطعة 1.20م"},
+            {id:133, cat:"نواقص (60×60 وعزل)", name:"شاسيه Cross Tee 0.60م (60×60)", unit:"قطعة 0.60م"},
+            {id:134, cat:"نواقص (60×60 وعزل)", name:"زاوية محيطية 60×60 (Wall Angle)", unit:"عود 3م"},
+            {id:135, cat:"نواقص (60×60 وعزل)", name:"صوف صخري 50 مم (عزل صوتي)", unit:"م²"},
+            {id:136, cat:"نواقص (60×60 وعزل)", name:"ماجنتيك تراك (مسار إضاءة)", unit:"م.ط"},
+            {id:137, cat:"نواقص (60×60 وعزل)", name:"بلاط صاج 60×60 ظاهر (Lay-in)", unit:"م²"},
+            {id:138, cat:"نواقص (60×60 وعزل)", name:"بلاط ألمنيوم 60×60 ظاهر (Lay-in)", unit:"م²"},
+            {id:139, cat:"نواقص (60×60 وعزل)", name:"بلاط صاج 60×60 مخفي (Clip-in)", unit:"م²"},
+            {id:140, cat:"نواقص (60×60 وعزل)", name:"بلاط ألمنيوم 60×60 مخفي (Clip-in)", unit:"م²"},
+            {id:141, cat:"نواقص (60×60 وعزل)", name:"شاسيه مخفي Clip-in (حامل+C+كلبس)", unit:"م²"},
+            {id:142, cat:"نواقص (60×60 وعزل)", name:"طقم إكسسوار T-Grid جاهز (بديل مجمّع)", unit:"م²"}
         ];
 
-        // مصنعيات محدثة بأسعار السوق (القاهرة الكبرى، نوفمبر 2026)
-        const DEFAULT_LABOR = {
-            ceiling_genish_m2: 100,
-            ceiling_tish_m2: 110,
-            ceiling_linear_m: 85,
-            wall_cladding_m2: 100,
-            wall_w111_m2: 180,
-            wall_w112_m2: 250,
-            cement_board_m2: 250,
-            tiles_layin_m2: 100,
-            tiles_clipin_m2: 165,
-            shadow_gap_m: 20,
-            shadow_led_m: 40,
-            corner_bead_m: 15,
-            end_bead_m: 10,
-            access_panel_pc: 300,
-            rockwool_m2: 40,
-            putty_m: 20
-        };
 
-        const DEFAULT_CONFIG = {
-            ceiling_margin_pct: 32,
-            systems_margin_pct: 32,
-            addon_margin_pct: 15,
-            min_safe_margin_pct: 15,
-            round_to: 5,
-            shadow_flat_ratio: 1.00, // 1.00 م.ط لكل 1 م² مسطح (مماثل لحساب الزوايا المحيطية، مثال 4×4=16م² -> 16م شادو)
-            default_shadow_id: 78,
-            default_shadow_led_id: 83,
-            addon_overrides: {
-                shadow_sell: 0,
-                shadow_flat_sell: 0,
-                shadow_led_sell: 0,
-                shadow_led_flat_sell: 0,
-                corner_sell: 0,
-                end_bead_sell: 0,
-                putty_sell: 0,
-                magnetic_install_sell: 100, // بند مقايسة منفصل: تركيب مجناتيك ج/م.ط (قرار المالك)
-                magnetic_supply_sell: 0,    // بند مقايسة منفصل: مجناتيك توريد وتركيب ج/م.ط (السعر لم يحدد بعد)
-                magnetic_corner90_sell: 400, // بند مقايسة: زاوية 90 مجناتيك ج/قطعة (السعر لم يحدد بعد)
-                profile_open_sell: 40       // بند مقايسة منفصل: تفتيح بروفايل ج/م.ط (قرار المالك)
-            }
-        };
 
         const PACKAGES_DEF = [
             {
@@ -439,343 +416,65 @@
         // =====================================================================
         class Store {
             constructor() {
-                const saved = JSON.parse(localStorage.getItem(STORAGE_VERSION) || 'null');
-                if (saved) {
-                    this.materials = saved.materials;
-                    this.labor = { ...DEFAULT_LABOR, ...saved.labor };
-                    this.config = {
-                        ...DEFAULT_CONFIG,
-                        ...saved.config,
-                        addon_overrides: { ...DEFAULT_CONFIG.addon_overrides, ...(saved.config?.addon_overrides || {}) }
-                    };
-                    this.published = saved.published || this._makeSnapshot();
-                    this.hasUnpublished = !!saved.hasUnpublished;
-                } else {
-                    this.materials = JSON.parse(JSON.stringify(DEFAULT_MATERIALS));
-                    this.labor = JSON.parse(JSON.stringify(DEFAULT_LABOR));
-                    this.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-                    this.published = this._makeSnapshot();
-                    this.hasUnpublished = false;
-                    this.persist();
-                }
-                this.isAdmin = sessionStorage.getItem('darkom_admin') === 'true';
+                this.materials = JSON.parse(JSON.stringify(DEFAULT_MATERIALS));
+                this.isAdmin = sessionStorage.getItem('darkom_admin') === 'true' && !!sessionStorage.getItem('darkom_admin_token');
             }
-            _makeSnapshot() {
+            getDataset() {
+                const c = PRICE_STATE.catalog || {};
                 return {
-                    materials: JSON.parse(JSON.stringify(this.materials)),
-                    labor: JSON.parse(JSON.stringify(this.labor)),
-                    config: JSON.parse(JSON.stringify(this.config)),
-                    publishedAt: new Date().toLocaleString('ar-EG')
+                    materials: this.materials,
+                    labor: {},
+                    config: { round_to: c.round_to || 5, shadow_flat_ratio: Number(c.shadow_flat_ratio) || 1, addon_overrides: { ...(c.overrides || {}) } }
                 };
-            }
-            persist() {
-                localStorage.setItem(STORAGE_VERSION, JSON.stringify({
-                    materials: this.materials, labor: this.labor, config: this.config,
-                    published: this.published, hasUnpublished: this.hasUnpublished
-                }));
-            }
-            markDirty() { this.hasUnpublished = true; this.persist(); }
-            publish() { this.published = this._makeSnapshot(); this.hasUnpublished = false; this.persist(); }
-
-            // Scoped reset: ONLY Materials (or only active category)
-            resetMaterials(cat = 'all') {
-                if (cat === 'all') {
-                    this.materials = JSON.parse(JSON.stringify(DEFAULT_MATERIALS));
-                } else {
-                    this.materials = this.materials.map(m => {
-                        if (m.cat === cat) {
-                            const def = DEFAULT_MATERIALS.find(d => d.id === m.id);
-                            return def ? JSON.parse(JSON.stringify(def)) : m;
-                        }
-                        return m;
-                    });
-                }
-                this.markDirty();
-            }
-            // Scoped reset: ONLY Labor & Margin/Addon Settings
-            resetLaborAndConfig() {
-                this.labor = JSON.parse(JSON.stringify(DEFAULT_LABOR));
-                this.config = JSON.parse(JSON.stringify(DEFAULT_CONFIG));
-                this.markDirty();
-            }
-            // Scoped reset: Revert draft back to last published snapshot
-            revertToPublished() {
-                this.materials = JSON.parse(JSON.stringify(this.published.materials));
-                this.labor = JSON.parse(JSON.stringify(this.published.labor));
-                this.config = JSON.parse(JSON.stringify(this.published.config));
-                this.hasUnpublished = false;
-                this.persist();
-            }
-            getDataset(useDraft = false) {
-                return useDraft ? { materials: this.materials, labor: this.labor, config: this.config } : this.published;
             }
         }
         let store;
 
         // =====================================================================
-        // 3. EXACT ENGINEERING PRICING ENGINE
+        // 3. PRICING FACADE (الأسعار تُحسب على السيرفر - هنا بحث فقط في كتالوج أسعار البيع)
         // =====================================================================
+        const _ADDON_FLAGS = ['tish', 'shadow', 'shadowLed', 'corner', 'endBead'];
+        const _cost = () => PRICE_STATE.costs;
         const Engine = {
-            priceOf(ds, id) {
-                const item = ds.materials.find(m => m.id === id);
-                return item ? Number(item.price) || 0 : 0;
-            },
             roundUp(val, step) {
                 return (!step || step <= 1) ? Math.ceil(val) : Math.ceil(val / step) * step;
             },
-            suspensionFlatMat(ds, isTish) {
-                if (!isTish) return 1.20 * (this.priceOf(ds, 70) / 50) + (1 / 35) * this.priceOf(ds, 69);
-                return 0.27 * this.priceOf(ds, 71) + 1.20 * (this.priceOf(ds, 68)/100 + this.priceOf(ds, 75) + this.priceOf(ds, 76) + 2 * (this.priceOf(ds, 74)/380));
-            },
-            tishLinearMatDelta(ds) {
-                const ganshPt = (this.priceOf(ds, 70)/50) + (this.priceOf(ds, 73)/100) + (0.025 * this.priceOf(ds, 69));
-                const tishPt = (0.40 * (this.priceOf(ds, 71)/2)) + (this.priceOf(ds, 68)/100) + this.priceOf(ds, 75) + this.priceOf(ds, 76) + 2 * (this.priceOf(ds, 74)/380);
-                return Math.max(0, tishPt - ganshPt);
-            },
-            ceilingFastPuttyMat(ds, isTish) {
-                return 20*(this.priceOf(ds,57)/1000) + 8*(this.priceOf(ds,67)/1000) + (isTish?2.5:3.5)*(this.priceOf(ds,73)/100) + 0.40*(this.priceOf(ds,49)/12.5) + 1.60*(this.priceOf(ds,48)/90);
-            },
-            // Helper: Shadow & Bead unit costs/sells
             addonUnit(ds, kind) {
-                const marginMult = 1 + (Number(ds.config.addon_margin_pct ?? ds.config.ceiling_margin_pct) / 100);
-                const ov = ds.config.addon_overrides || {};
-                const puttyKg = this.priceOf(ds, 49) / 12.5;
-                const s25 = this.priceOf(ds, 57) / 1000;
-                const ratio = Number(ds.config.shadow_flat_ratio) || 1.00;
-
-                if (kind === 'shadow') {
-                    const matLm = (this.priceOf(ds, ds.config.default_shadow_id) * 1.08) / 3;
-                    const labLm = ds.labor.shadow_gap_m;
-                    const costLm = matLm + labLm;
-                    const sellLm = ov.shadow_sell > 0 ? ov.shadow_sell : this.roundUp(costLm * marginMult, ds.config.round_to);
-                    const matFlat = matLm * ratio, labFlat = labLm * ratio;
-                    const costFlat = costLm * ratio;
-                    const sellFlat = ov.shadow_flat_sell > 0 ? ov.shadow_flat_sell : this.roundUp(costFlat * marginMult, ds.config.round_to);
-                    return { costLm, sellLm, costFlat, sellFlat, ratio, matLm, labLm, matFlat, labFlat };
-                }
-                if (kind === 'shadowLed') {
-                    const matLm = (this.priceOf(ds, ds.config.default_shadow_led_id) * 1.08) / 3;
-                    const labLm = ds.labor.shadow_led_m;
-                    const costLm = matLm + labLm;
-                    const sellLm = ov.shadow_led_sell > 0 ? ov.shadow_led_sell : this.roundUp(costLm * marginMult, ds.config.round_to);
-                    const matFlat = matLm * ratio, labFlat = labLm * ratio;
-                    const costFlat = costLm * ratio;
-                    const sellFlat = ov.shadow_led_flat_sell > 0 ? ov.shadow_led_flat_sell : this.roundUp(costFlat * marginMult, ds.config.round_to);
-                    return { costLm, sellLm, costFlat, sellFlat, ratio, matLm, labLm, matFlat, labFlat };
-                }
-                if (kind === 'magneticSupply') {
-                    // مجناتيك توريد وتركيب = سعر خامة المتر (id 136) + تركيب 100 ج/م + هامش الإضافات
-                    const matLm = this.priceOf(ds, 136);
-                    const labLm = Number(ov.magnetic_install_sell ?? 100) || 0;
-                    const costLm = matLm + labLm;
-                    const sellLm = ov.magnetic_supply_sell > 0 ? ov.magnetic_supply_sell : this.roundUp(costLm * marginMult, ds.config.round_to);
-                    return { costLm, sellLm, matLm, labLm };
-                }
-                if (kind === 'corner') {
-                    const matLm = (this.priceOf(ds, 85) * 1.08) / 3 + 0.15 * puttyKg + 5 * s25;
-                    const labLm = ds.labor.corner_bead_m;
-                    const costLm = matLm + labLm;
-                    const sellLm = ov.corner_sell > 0 ? ov.corner_sell : this.roundUp(costLm * marginMult, ds.config.round_to);
-                    return { costLm, sellLm, matLm, labLm };
-                }
-                if (kind === 'endBead') {
-                    const matLm = (this.priceOf(ds, 86) * 1.08) / 3 + 0.15 * puttyKg + 5 * s25;
-                    const labLm = ds.labor.end_bead_m;
-                    const costLm = matLm + labLm;
-                    const sellLm = ov.end_bead_sell > 0 ? ov.end_bead_sell : this.roundUp(costLm * marginMult, ds.config.round_to);
-                    return { costLm, sellLm, matLm, labLm };
-                }
-                if (kind === 'putty') {
-                    const matLm = 0.15 * puttyKg + 5 * s25;
-                    const labLm = Number(ds.labor.putty_m) || 0;
-                    const costLm = matLm + labLm;
-                    const sellLm = ov.putty_sell > 0 ? ov.putty_sell : this.roundUp(costLm * marginMult, ds.config.round_to);
-                    return { costLm, sellLm, matLm, labLm };
-                }
-                return { costLm: 0, sellLm: 0, costFlat: 0, sellFlat: 0 };
+                const a = ((PRICE_STATE.catalog || {}).addons || {})[kind];
+                if (!a) return { costLm: 0, sellLm: 0, costFlat: 0, sellFlat: 0 };
+                const k = (_cost() && _cost().addons && _cost().addons[kind]) || {};
+                const out = { costLm: k.costLm || 0, sellLm: a.sellLm, matLm: 0, labLm: 0 };
+                if (a.sellFlat != null) { out.sellFlat = a.sellFlat; out.costFlat = k.costFlat || 0; out.ratio = Number(PRICE_STATE.catalog.shadow_flat_ratio) || 1; }
+                return out;
             },
-
-            // Calculate Ceiling Package (Flat m2 & Linear Cove m.ط)
-            // - Color (White/Green/Red) updates BOTH Flat AND Cove!
-            // - Shadow Gap (Normal/LED) updates BOTH Flat (like wall angle perimeter) AND Cove!
-            // - Corner Bead & End Bead update Cove (and are pre-activated on Premium & Pro)!
             calcPackage(ds, pkgId, color = 'white', addons = {}) {
-                const pkg = PACKAGES_DEF.find(p => p.id === pkgId);
-                const boardId = pkg.boardIds[color] || pkg.boardIds.white;
-                const boardP = this.priceOf(ds, boardId);
-                const angleP = this.priceOf(ds, pkg.angleId);
-                const omegaP = this.priceOf(ds, pkg.omegaId);
-                const cP = this.priceOf(ds, pkg.cId);
-                if (boardP <= 0 || angleP <= 0 || omegaP <= 0 || cP <= 0) {
-                    return { missing: true, flatPrice: 0, covePrice: 0 };
-                }
-
-                const useTish = pkg.includes_tish || !!addons.tish;
-
-                // 1) Base Flat Ceiling (m2)
-                const flatBoards = (1/3.60) * 1.10 * boardP;
-                const flatMetal = (1.10/3)*cP + ((1/0.60)*1.10/3)*omegaP + (1.0/3)*angleP;
-                const flatSusp = this.suspensionFlatMat(ds, useTish);
-                const flatFast = this.ceilingFastPuttyMat(ds, useTish);
-                const baseFlatMat = flatBoards + flatMetal + flatSusp + flatFast;
-                const puttyLabor = Number(ds.labor.putty_m) || 0;
-                const baseFlatLabor = (useTish ? ds.labor.ceiling_tish_m2 : ds.labor.ceiling_genish_m2) + puttyLabor;
-                let flatCost = baseFlatMat + baseFlatLabor;
-
-                // 2) Base Linear Cove (m.ط) — Uses exact color boardP!
-                let baseCoveMat = (0.5175/3.60)*boardP + (2.16/3)*angleP + (1.10/3)*omegaP
-                    + 1.05*(this.priceOf(ds,46)/30) + 0.25*(this.priceOf(ds,49)/12.5)
-                    + 12*(this.priceOf(ds,57)/1000) + 8*(this.priceOf(ds,67)/1000);
-                let baseCoveLabor = ds.labor.ceiling_linear_m + puttyLabor;
-
-                if (!pkg.includes_tish && addons.tish) {
-                    baseCoveMat += this.tishLinearMatDelta(ds);
-                    baseCoveLabor += Math.max(0, ds.labor.ceiling_tish_m2 - ds.labor.ceiling_genish_m2);
-                }
-                let coveCost = baseCoveMat + baseCoveLabor;
-
-                const marginMult = 1 + (ds.config.ceiling_margin_pct / 100);
-                let flatSell = this.roundUp(flatCost * marginMult, ds.config.round_to);
-                let coveSell = this.roundUp(coveCost * marginMult, ds.config.round_to);
-
-                // 3) Shadow Gap applies to BOTH Flat (perimeter ratio like wall angle) AND Cove (linear)
-                if (addons.shadow) {
-                    const sh = this.addonUnit(ds, 'shadow');
-                    flatCost += sh.costFlat;
-                    flatSell += sh.sellFlat;
-                    coveCost += sh.costLm;
-                    coveSell += sh.sellLm;
-                }
-                if (addons.shadowLed) {
-                    const shl = this.addonUnit(ds, 'shadowLed');
-                    flatCost += shl.costFlat;
-                    flatSell += shl.sellFlat;
-                    coveCost += shl.costLm;
-                    coveSell += shl.sellLm;
-                }
-
-                // 4) Corner Bead & End Bead apply to Linear (Cove)
-                if (addons.corner) {
-                    const cb = this.addonUnit(ds, 'corner');
-                    coveCost += cb.costLm;
-                    coveSell += cb.sellLm;
-                }
-                if (addons.endBead) {
-                    const eb = this.addonUnit(ds, 'endBead');
-                    coveCost += eb.costLm;
-                    coveSell += eb.sellLm;
-                }
-
-                return {
-                    missing: false,
-                    flatMat: baseFlatMat, flatLabor: baseFlatLabor, flatCost, flatPrice: flatSell,
-                    flatProfit: flatSell - flatCost, flatMarginPct: ((flatSell - flatCost) / flatSell) * 100,
-                    coveMat: baseCoveMat, coveLabor: baseCoveLabor, coveCost, covePrice: coveSell,
-                    coveProfit: coveSell - coveCost, coveMarginPct: ((coveSell - coveCost) / coveSell) * 100
-                };
+                const mask = _ADDON_FLAGS.reduce((m, f, i) => m | (addons && addons[f] ? 1 << i : 0), 0);
+                const key = pkgId + '|' + color + '|' + mask;
+                const v = (PRICE_STATE.catalog.packages || {})[key];
+                if (!v) return { missing: true, flatPrice: 0, covePrice: 0 };
+                const c = (_cost() && _cost().packages && _cost().packages[key]) || [0, 0];
+                const [fp, cp] = v, [fc, cc] = c;
+                return { missing: false, flatCost: fc, flatPrice: fp, flatProfit: fp - fc, flatMarginPct: fp ? ((fp - fc) / fp) * 100 : 0,
+                         coveCost: cc, covePrice: cp, coveProfit: cp - cc, coveMarginPct: cp ? ((cp - cc) / cp) * 100 : 0 };
             },
-
-            // Calculate Gypsum Walls (5 / 7 / 10 cm)
+            _sys(group, key) {
+                const t = (PRICE_STATE.catalog || {})[group] || {};
+                if (!(key in t)) return { unavailable: true };
+                const sell = t[key];
+                if (sell == null) return { missing: true };
+                const cs = (_cost() && _cost()[group]) || {};
+                const cost = cs[key] || 0;
+                return { missing: false, totalCost: cost, sellPrice: sell, profit: sell - cost };
+            },
             calcWall(ds, { system, width, steel, brand, color, rockwool }) {
-                const profileMap = {
-                    '5_c35': [37, 39], '5_c40': [36, 38], '5_gm50': [98, 100], '5_gm60': [99, 101],
-                    '7_c35': [41, 43], '7_c40': [40, 42], '7_gm50': [102, 104], '7_gm60': [103, 105],
-                    '10_c40': [44, 45], '10_gm50': [106, 108], '10_gm60': [107, 109]
-                };
-                const boardMap = {
-                    knauf: { white: 1, green: 2, red: 3 },
-                    gboard: { white: 5, green: 6, red: 7 },
-                    osman: { white: 11, green: 12, red: 13 }
-                };
-                const pair = profileMap[`${width}_${steel}`];
-                if (!pair) return { unavailable: true };
-                const studP = this.priceOf(ds, pair[0]), trackP = this.priceOf(ds, pair[1]), boardP = this.priceOf(ds, boardMap[brand][color]);
-                if (!studP || !trackP || !boardP) return { missing: true };
-
-                const metalCost = (2.20/3)*studP + (0.75/3)*trackP;
-                const board1Face = (1/3.60)*1.10*boardP;
-                const s25 = this.priceOf(ds,57)/1000, s35 = this.priceOf(ds,58)/1000, tek = this.priceOf(ds,67)/1000, fischer = this.priceOf(ds,73)/100, puttyKg = this.priceOf(ds,49)/12.5, fiberM = this.priceOf(ds,48)/90;
-                let boardsCost = 0, fastCost = 0, labor = 0;
-                if (system === 'cladding') { boardsCost = board1Face; fastCost = 17*s25 + 6*tek + 2*fischer + 0.40*puttyKg + 1.60*fiberM; labor = ds.labor.wall_cladding_m2; }
-                else if (system === 'w111') { boardsCost = board1Face*2; fastCost = 32*s25 + 6*tek + 2*fischer + 0.75*puttyKg + 3.20*fiberM; labor = ds.labor.wall_w111_m2; }
-                else { boardsCost = board1Face*4; fastCost = 15*s25 + 32*s35 + 6*tek + 2*fischer + 0.95*puttyKg + 3.20*fiberM; labor = ds.labor.wall_w112_m2; }
-                labor += Number(ds.labor.putty_m) || 0;
-
-                let rockwoolMissing = false, rockwoolCost = 0;
-                if (rockwool) {
-                    const rwP = this.priceOf(ds, 135);
-                    if (rwP <= 0) rockwoolMissing = true;
-                    else rockwoolCost = rwP * 1.05 + ds.labor.rockwool_m2;
-                }
-                const totalCost = metalCost + boardsCost + fastCost + labor + rockwoolCost;
-                const sell = this.roundUp(totalCost * (1 + ds.config.systems_margin_pct/100), ds.config.round_to);
-                return { missing: rockwoolMissing, totalCost, sellPrice: sell, profit: sell - totalCost };
+                return this._sys('walls', [system, String(width), steel, brand, color, rockwool ? 1 : 0].join('|'));
             },
-
-            // Calculate Cement Board (Now supports 5 / 7 / 10 cm Wall Profiles + Steel 0.50/0.60 + Acoustic Rockwool!)
             calcCement(ds, { type, width = '7', steel = 'gm60', boardId, rockwool = false }) {
-                const boardP = this.priceOf(ds, boardId);
-                if (boardP <= 0) return { missing: true };
-                const board1Face = (1/2.88)*1.10*boardP; // 2.88m2 mandatory board area!
-                const drillScrew = this.priceOf(ds,65)/500, tek = this.priceOf(ds,67)/1000, fischer = this.priceOf(ds,73)/100, cemPuttyKg = this.priceOf(ds,54)/20, fiberM = this.priceOf(ds,48)/90;
-
-                const profileMap = {
-                    '5_gm50': [98, 100], '5_gm60': [99, 101],
-                    '7_gm50': [102, 104], '7_gm60': [103, 105],
-                    '10_gm50': [106, 108], '10_gm60': [107, 109]
-                };
-
-                let mat = 0;
-                if (type === 'ceiling') {
-                    const metal = 1.2222*this.priceOf(ds,96) + 0.4889*this.priceOf(ds,95) + 0.3333*this.priceOf(ds,97);
-                    const susp = 0.4163*this.priceOf(ds,71) + 1.85*(this.priceOf(ds,68)/100 + this.priceOf(ds,75) + this.priceOf(ds,76) + 2*(this.priceOf(ds,74)/380));
-                    mat = board1Face + metal + susp + 26*drillScrew + 12*tek + 2.5*fischer + 0.75*cemPuttyKg + 1.90*fiberM;
-                } else {
-                    const pair = profileMap[`${width}_${steel}`] || [103, 105];
-                    const studP = this.priceOf(ds, pair[0]), trackP = this.priceOf(ds, pair[1]);
-                    const metal = 1.0267 * studP + 0.25 * trackP; // @40cm spacing for heavy cement board
-                    if (type === 'wall1') {
-                        mat = board1Face + metal + 20*drillScrew + 8*tek + 2*fischer + 0.70*cemPuttyKg + 1.80*fiberM;
-                    } else {
-                        mat = board1Face*2 + metal + 40*drillScrew + 8*tek + 2*fischer + 1.40*cemPuttyKg + 3.60*fiberM;
-                    }
-                }
-
-                let rockwoolMissing = false, rockwoolCost = 0;
-                if (rockwool) {
-                    const rwP = this.priceOf(ds, 135);
-                    if (rwP <= 0) rockwoolMissing = true;
-                    else rockwoolCost = rwP * 1.05 + ds.labor.rockwool_m2;
-                }
-
-                const labor = ds.labor.cement_board_m2 * (type === 'wall2' ? 1.3 : 1);
-                const totalCost = mat + labor + rockwoolCost;
-                const sell = this.roundUp(totalCost*(1 + ds.config.systems_margin_pct/100), ds.config.round_to);
-                return { missing: rockwoolMissing, totalCost, sellPrice: sell, profit: sell - totalCost };
+                const k = type === 'ceiling' ? ['ceiling', '7', 'gm60', boardId, rockwool ? 1 : 0] : [type, String(width), steel, boardId, rockwool ? 1 : 0];
+                return this._sys('cement', k.join('|'));
             },
-
-            // Calculate 60x60 Tiles
             calcTile60(ds, { tileId, systemType }) {
-                const tileP = this.priceOf(ds, tileId);
-                if (tileP <= 0) return { missing: true };
-                const tileMat = tileP * 1.07;
-                let gridMat = 0, labor = 0;
-                if (systemType === 'clipin') {
-                    const clipChassis = this.priceOf(ds, 141);
-                    if (clipChassis <= 0) return { missing: true };
-                    gridMat = clipChassis * 1.05 + 0.80 * (this.priceOf(ds,71)*0.20 + this.priceOf(ds,68)/100);
-                    labor = ds.labor.tiles_clipin_m2;
-                } else {
-                    const bundleP = this.priceOf(ds, 142);
-                    const mt = this.priceOf(ds,131), ct12 = this.priceOf(ds,132), ct06 = this.priceOf(ds,133), wa = this.priceOf(ds,134);
-                    if (bundleP > 0) gridMat = bundleP;
-                    else if (mt>0 && ct12>0 && ct06>0 && wa>0) gridMat = 0.243*mt + 1.458*ct12 + 1.458*ct06 + 0.333*wa + 0.80*(this.priceOf(ds,70)/50 + 0.025*this.priceOf(ds,69));
-                    else return { missing: true };
-                    labor = ds.labor.tiles_layin_m2;
-                }
-                const totalCost = tileMat + gridMat + labor;
-                const sell = this.roundUp(totalCost*(1 + ds.config.systems_margin_pct/100), ds.config.round_to);
-                return { missing: false, totalCost, sellPrice: sell, profit: sell - totalCost };
+                return this._sys('tiles', tileId + '|' + systemType);
             }
         };
 
@@ -839,7 +538,7 @@
                     document.getElementById('pwa-install-btn')?.classList.remove('hidden');
                 });
                 this.updateNavVisibility();
-                if (store.isAdmin) this.adminNavigate('materials'); else this.navigate('home');
+                if (store.isAdmin) this.adminNavigate('worker_quotes'); else this.navigate('home');
             },
             updateNavVisibility() {
                 document.getElementById('public-nav').classList.toggle('hidden', store.isAdmin);
@@ -1198,9 +897,10 @@
             },
 
             renderExtrasCatalog(container, ds) {
-                const margin = 1 + ds.config.systems_margin_pct/100;
-                const accessPanels = [110,111,112,113,114].map(id => { const it = ds.materials.find(m=>m.id===id); return { name: it.name, sell: Engine.roundUp((it.price + ds.labor.access_panel_pc)*margin, ds.config.round_to) }; });
-                const linear = [{id:77,l:ds.labor.shadow_gap_m},{id:78,l:ds.labor.shadow_gap_m},{id:80,l:ds.labor.shadow_gap_m},{id:81,l:ds.labor.shadow_gap_m},{id:83,l:ds.labor.shadow_led_m},{id:84,l:ds.labor.shadow_led_m},{id:85,l:ds.labor.corner_bead_m},{id:86,l:ds.labor.end_bead_m}].map(x => { const it = ds.materials.find(m=>m.id===x.id); return { name: it.name, sell: Engine.roundUp(((it.price*1.08/3)+x.l)*margin, ds.config.round_to) }; });
+                const cat = PRICE_STATE.catalog;
+                const nm = id => (ds.materials.find(m=>m.id===id) || {}).name || ('#'+id);
+                const accessPanels = [110,111,112,113,114].map(id => ({ name: nm(id), sell: cat.access_panels[id] }));
+                const linear = [77,78,80,81,83,84,85,86].map(id => ({ name: nm(id), sell: cat.linear_extras[id] }));
                 container.innerHTML = `<div class="grid md:grid-cols-2 gap-6"><div class="bg-white rounded-2xl shadow-md p-5"><h3 class="font-black text-lg text-primary mb-4 border-b-2 border-gold inline-block pb-1">أبواب الكشف (بالقطعة)</h3><div class="divide-y">${accessPanels.map(p=>`<div class="py-3 flex justify-between text-sm"><span class="font-bold">${p.name}</span><span class="font-black text-primary">${p.sell} ج/قطعة</span></div>`).join('')}</div></div><div class="bg-white rounded-2xl shadow-md p-5"><h3 class="font-black text-lg text-primary mb-4 border-b-2 border-gold inline-block pb-1">الشادو جاب وكورنر وإند بيد (بالمتر الطولي)</h3><div class="divide-y">${linear.map(p=>`<div class="py-3 flex justify-between text-sm"><span class="font-bold">${p.name}</span><span class="font-black text-primary">${p.sell} ج/م.ط</span></div>`).join('')}</div></div></div>`;
             },
 
@@ -1618,7 +1318,7 @@
                     const pt = Engine.addonUnit(ds, 'putty');
                     item = { label: 'معجون', unit: 'م.ط', qty, unitCost: pt.costLm, unitSell: pt.sellLm };
                 } else if (val === 'ap_113') {
-                    const m = ds.materials.find(x=>x.id===113), cost = m.price + ds.labor.access_panel_pc, sell = Engine.roundUp(cost*(1+ds.config.systems_margin_pct/100), ds.config.round_to);
+                    const sell = PRICE_STATE.catalog.access_panels[113], cost = (PRICE_STATE.costs && PRICE_STATE.costs.access_panels && PRICE_STATE.costs.access_panels[113] && PRICE_STATE.costs.access_panels[113].cost) || 0;
                     item = { label: 'باب كشف 60×60 سم', unit: 'قطعة', qty, unitCost: cost, unitSell: sell };
                 }
                 else if (val.startsWith('x_')) {
@@ -2092,415 +1792,61 @@
             },
 
             // =================================================================
-            // ADMIN ERP SYSTEM (PIN via ADMIN_PIN — NO SIMULATOR, SCOPED RESETS)
+            // ADMIN: دخول بالسيرفر. الأسعار والتكاليف تُدار من صفحة الإدارة على السيرفر.
             // =================================================================
             toggleAdminLogin() {
                 if (store.isAdmin) { this.logoutAdmin(); return; }
-                const pin = prompt("أدخل رمز الدخول السري لإدارة DARKOM ERP:");
-                if (pin === ADMIN_PIN) {
-                    store.isAdmin = true; sessionStorage.setItem('darkom_admin', 'true');
-                    this.updateNavVisibility(); this.adminNavigate('materials');
-                    this.toast("مرحباً بك في لوحة GYPSUM PRO ERP");
-                } else if (pin !== null) alert("رمز الدخول غير صحيح");
+                if (document.getElementById('admin-login-modal')) return;
+                const d = document.createElement('div');
+                d.id = 'admin-login-modal';
+                d.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:200;display:flex;align-items:center;justify-content:center;padding:16px';
+                d.innerHTML = `<div style="background:#fff;border-radius:16px;padding:20px;width:100%;max-width:340px" dir="rtl">
+                    <div style="font-weight:900;margin-bottom:12px">دخول الإدارة</div>
+                    <input id="adm-u" placeholder="اسم المستخدم" autocomplete="username" style="width:100%;border:1px solid #ccc;border-radius:10px;padding:10px;margin-bottom:8px">
+                    <input id="adm-p" type="password" placeholder="كلمة المرور" autocomplete="current-password" style="width:100%;border:1px solid #ccc;border-radius:10px;padding:10px;margin-bottom:8px">
+                    <div id="adm-err" style="color:#c00;font-size:12px;min-height:16px;margin-bottom:6px"></div>
+                    <div style="display:flex;gap:8px"><button id="adm-go" style="flex:1;background:#0d3b2e;color:#d4af37;border-radius:10px;padding:10px;font-weight:800">دخول</button><button id="adm-x" style="padding:10px;border-radius:10px;border:1px solid #ccc">إلغاء</button></div></div>`;
+                document.body.appendChild(d);
+                const close = () => d.remove();
+                d.querySelector('#adm-x').onclick = close;
+                const go = async () => {
+                    const err = d.querySelector('#adm-err'); err.textContent = '';
+                    try {
+                        const r = await fetch(PRICING_API + '/api/admin/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: d.querySelector('#adm-u').value.trim(), password: d.querySelector('#adm-p').value }) });
+                        if (r.status === 429) { err.textContent = 'محاولات كثيرة، حاول بعد قليل'; return; }
+                        if (!r.ok) { err.textContent = 'بيانات الدخول غير صحيحة'; return; }
+                        const j = await r.json();
+                        sessionStorage.setItem('darkom_admin_token', j.token); sessionStorage.setItem('darkom_admin', 'true');
+                        store.isAdmin = true; await loadCosts(); close();
+                        this.updateNavVisibility(); this.adminNavigate('worker_quotes');
+                        this.toast('مرحباً بك في لوحة الإدارة');
+                    } catch (e) { err.textContent = 'تعذر الاتصال بالسيرفر'; }
+                };
+                d.querySelector('#adm-go').onclick = go;
+                d.querySelector('#adm-p').addEventListener('keydown', e => { if (e.key === 'Enter') go(); });
+                setTimeout(() => d.querySelector('#adm-u').focus(), 50);
             },
             logoutAdmin() {
-                store.isAdmin = false; sessionStorage.removeItem('darkom_admin');
+                store.isAdmin = false; PRICE_STATE.costs = null;
+                sessionStorage.removeItem('darkom_admin'); sessionStorage.removeItem('darkom_admin_token');
                 this.updateNavVisibility(); this.navigate('home');
             },
             adminNavigate(view) {
-                this.currentAdminView = view;
+                this.currentAdminView = 'worker_quotes';
                 const main = document.getElementById('main-content');
                 main.innerHTML = ''; main.className = "max-w-7xl mx-auto px-4 py-4 min-h-screen fade-in";
-                document.querySelectorAll('.admin-nav-item').forEach(el => el.classList.toggle('active', el.dataset.admin === view));
-
-                const banner = store.hasUnpublished ? `
-                    <div class="mb-5 bg-amber-50 border-2 border-amber-400 rounded-xl p-3.5 flex flex-col sm:flex-row justify-between items-center gap-3 no-print">
-                        <div class="text-xs md:text-sm font-bold text-amber-900">⚠️ يوجد تعديلات على الأسعار/المصنعيات لم تُنشر بعد للموقع العام.</div>
-                        <button onclick="store.publish(); app.toast('تم اعتماد ونشر كافة الأسعار للموقع العام!'); app.adminNavigate('${view}')" class="bg-primary text-gold px-4 py-2 rounded-lg font-extrabold text-xs shrink-0">✓ اعتماد ومزامنة الآن</button>
-                    </div>` : '';
-
-                main.innerHTML = banner + '<div id="admin-view-body"></div>';
-                const body = document.getElementById('admin-view-body');
-                if (view === 'materials') this.renderAdminMaterials(body);
-                else if (view === 'labor') this.renderAdminLabor(body);
-                else if (view === 'packages') this.renderAdminPackages(body);
-                else if (view === 'worker_quotes') this.renderWorker(body, true);
+                document.querySelectorAll('.admin-nav-item').forEach(el => el.classList.toggle('active', el.dataset.admin === 'worker_quotes'));
+                main.innerHTML = '<div id="admin-view-body"></div>';
+                this.renderWorker(document.getElementById('admin-view-body'), true);
             },
-
-            // --- ADMIN TAB 1: MATERIALS (WITH SCOPED RESET ONLY FOR MATERIALS!) ---
-            renderAdminMaterials(container) {
-                const cats = ['all', ...new Set(store.materials.map(m => m.cat))];
-                const f = this.adminMatFilter;
-                const filtered = store.materials.filter(m => (!f.q || m.name.includes(f.q) || String(m.id)===f.q) && (f.cat==='all'||m.cat===f.cat) && (!f.onlyZero||m.price===0));
-                const zeroCount = store.materials.filter(m => m.price===0).length;
-                const resetLabel = f.cat === 'all' ? '↺ ضبط الخامات فقط' : `↺ ضبط قسم (${f.cat})`;
-
-                container.innerHTML = `
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
-                        <div>
-                            <h2 class="text-xl md:text-2xl font-black text-primary">إدارة أسعار الخامات (${store.materials.length} صنف)</h2>
-                            <p class="text-xs text-gray-500">زر الضبط هنا خاص بأسعار الخامات فقط ولا يؤثر على المصنعيات أو الغرف أو المقايسات</p>
-                        </div>
-                        <div class="flex flex-wrap gap-2">
-                            <button onclick="app.bulkAdjustCategory()" class="bg-amber-100 text-amber-900 px-3 py-2 rounded-lg text-xs font-bold hover:bg-amber-200">⚡ تعديل جماعي %</button>
-                            <button onclick="app.exportMaterialsCSV()" class="bg-gray-200 text-gray-800 px-3 py-2 rounded-lg text-xs font-bold hover:bg-gray-300">⬇ تصدير CSV</button>
-                            <button onclick="if(confirm('إعادة ضبط ${f.cat==='all'?'أسعار الخامات فقط':'تصنيف '+f.cat+' فقط'} للقيم الافتراضية؟ (لن تتأثر المصنعيات أو باقي الأقسام)')) { store.resetMaterials('${f.cat}'); app.toast('تم ضبط الخامات فقط بنجاح'); app.adminNavigate('materials'); }" class="bg-red-100 text-red-700 px-3 py-2 rounded-lg text-xs font-bold hover:bg-red-200">${resetLabel}</button>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-3.5 rounded-xl shadow-sm border border-gray-200 mb-4 grid sm:grid-cols-4 gap-3">
-                        <input type="text" placeholder="🔍 ابحث بالاسم أو الكود..." value="${f.q}" oninput="app.adminMatFilter.q=this.value; app.adminNavigate('materials')" class="sm:col-span-2 border rounded-lg px-3 py-2 text-sm outline-none focus:border-primary">
-                        <select onchange="app.adminMatFilter.cat=this.value; app.adminNavigate('materials')" class="border rounded-lg px-3 py-2 text-sm font-bold outline-none">
-                            ${cats.map(c => `<option value="${c}" ${f.cat===c?'selected':''}>${c==='all'?'كل التصنيفات':c}</option>`).join('')}
-                        </select>
-                        <label class="flex items-center gap-2 text-xs font-bold text-red-700 cursor-pointer px-2">
-                            <input type="checkbox" ${f.onlyZero?'checked':''} onchange="app.adminMatFilter.onlyZero=this.checked; app.adminNavigate('materials')" class="w-4 h-4 accent-red-600">
-                            عرض النواقص فقط (${zeroCount})
-                        </label>
-                    </div>
-
-                    <div class="bg-white rounded-xl shadow overflow-hidden border border-gray-200">
-                        <div class="overflow-x-auto max-h-[65vh]">
-                            <table class="w-full text-xs md:text-sm text-right">
-                                <thead class="bg-gray-100 text-gray-700 font-bold sticky top-0">
-                                    <tr><th class="p-3">#</th><th class="p-3">الصنف</th><th class="p-3">التصنيف</th><th class="p-3">الوحدة</th><th class="p-3">السعر (ج.م)</th><th class="p-3">الحالة</th></tr>
-                                </thead>
-                                <tbody class="divide-y divide-gray-100">
-                                    ${filtered.map(m => `
-                                        <tr class="hover:bg-gray-50 ${m.price===0?'bg-red-50/40':''}">
-                                            <td class="p-3 font-mono text-gray-500">#${m.id}</td>
-                                            <td class="p-3 font-bold text-gray-800">${m.name}</td>
-                                            <td class="p-3"><span class="bg-gray-100 px-2 py-0.5 rounded text-[11px]">${m.cat}</span></td>
-                                            <td class="p-3 text-gray-500">${m.unit}</td>
-                                            <td class="p-3"><input type="number" step="0.25" value="${m.price}" onchange="app.updateMaterialPrice(${m.id}, this.value)" class="w-24 border-2 rounded-lg p-1.5 text-center font-black ${m.price===0?'border-red-300 text-red-600':'border-gray-200 text-primary'}"></td>
-                                            <td class="p-3 font-bold text-xs">${m.price>0?'<span class="text-green-700">✓ مفعّل</span>':'<span class="text-red-600">اطلب عرض سعر</span>'}</td>
-                                        </tr>`).join('')}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>`;
-            },
-
-            updateMaterialPrice(id, val) {
-                const it = store.materials.find(m=>m.id===id);
-                if (it) { it.price = Math.max(0, parseFloat(val)||0); store.markDirty(); this.toast(`تم تحديث سعر #${id} (في المسودة)`); }
-            },
-            bulkAdjustCategory() {
-                const pct = parseFloat(prompt(`نسبة التعديل (%) لـ (${this.adminMatFilter.cat==='all'?'كل الأصناف المسعّرة':this.adminMatFilter.cat}):`));
-                if (isNaN(pct) || !pct) return;
-                store.materials.forEach(m => { if (m.price>0 && (this.adminMatFilter.cat==='all'||m.cat===this.adminMatFilter.cat)) m.price = Math.round(m.price*(1+pct/100)*100)/100; });
-                store.markDirty(); this.adminNavigate('materials');
-            },
-            exportMaterialsCSV() {
-                const rows = [['ID','Category','Name','Unit','Price'], ...store.materials.map(m => [m.id, m.cat, m.name, m.unit, m.price])];
-                const blob = new Blob(["\uFEFF" + rows.map(r => r.join(',')).join('\n')], { type: 'text/csv;charset=utf-8;' });
-                const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'darkom_materials.csv'; a.click();
-            },
-
-            // --- ADMIN TAB 2: LABOR, MARGINS, END BEAD & SHADOW FLAT RATIO (WITH SCOPED RESET!) ---
-            renderAdminLabor(container) {
-                const ds = store.getDataset(true);
-                const laborFields = [
-                    ['ceiling_genish_m2', 'مصنعية سقف مسطح جنش (ج/م²)'],
-                    ['ceiling_tish_m2', 'مصنعية سقف مسطح تيش (ج/م²)'],
-                    ['ceiling_linear_m', 'مصنعية بيت نور طولي (ج/م.ط)'],
-                    ['wall_cladding_m2', 'مصنعية تجليد حائط وجه (ج/م²)'],
-                    ['wall_w111_m2', 'مصنعية قاطع وجهين W111 (ج/م²)'],
-                    ['wall_w112_m2', 'مصنعية قاطع دبل W112 (ج/م²)'],
-                    ['cement_board_m2', 'مصنعية سيمنت بورد (ج/م²)'],
-                    ['tiles_layin_m2', 'مصنعية بلاط 60×60 ظاهر Lay-in'],
-                    ['tiles_clipin_m2', 'مصنعية بلاط 60×60 مخفي Clip-in'],
-                    ['shadow_gap_m', 'مصنعية شادو جاب عادي (ج/م.ط)'],
-                    ['shadow_led_m', 'مصنعية شادو جاب ليد (ج/م.ط)'],
-                    ['corner_bead_m', 'مصنعية كورنر بيد (ج/م.ط)'],
-                    ['end_bead_m', 'مصنعية إند بيد (ج/م.ط)'],
-                    ['putty_m', 'مصنعية معجون (ج/م² أو م.ط)'],
-                    ['access_panel_pc', 'مصنعية باب كشف (ج/قطعة)'],
-                    ['rockwool_m2', 'مصنعية صوف صخري عزل صوتي (ج/م²)']
-                ];
-
-                const sh = Engine.addonUnit(ds, 'shadow'), shl = Engine.addonUnit(ds, 'shadowLed'), cb = Engine.addonUnit(ds, 'corner'), eb = Engine.addonUnit(ds, 'endBead'), pt = Engine.addonUnit(ds, 'putty');
-                const ov = ds.config.addon_overrides;
-
-                // Loss Guardrail
-                const alerts = [];
-                if (ov.shadow_sell > 0 && ov.shadow_sell < sh.costLm) alerts.push(`شادو عادي (طولي): البيع (${ov.shadow_sell}) أقل من التكلفة (${sh.costLm.toFixed(1)} ج)`);
-                if (ov.shadow_flat_sell > 0 && ov.shadow_flat_sell < sh.costFlat) alerts.push(`شادو عادي (مسطح): البيع (${ov.shadow_flat_sell}) أقل من التكلفة (${sh.costFlat.toFixed(1)} ج)`);
-                if (ov.shadow_led_sell > 0 && ov.shadow_led_sell < shl.costLm) alerts.push(`شادو ليد (طولي): البيع (${ov.shadow_led_sell}) أقل من التكلفة (${shl.costLm.toFixed(1)} ج)`);
-                if (ov.corner_sell > 0 && ov.corner_sell < cb.costLm) alerts.push(`كورنر بيد: البيع (${ov.corner_sell}) أقل من التكلفة (${cb.costLm.toFixed(1)} ج)`);
-                if (ov.end_bead_sell > 0 && ov.end_bead_sell < eb.costLm) alerts.push(`إند بيد: البيع (${ov.end_bead_sell}) أقل من التكلفة (${eb.costLm.toFixed(1)} ج)`);
-
-                container.innerHTML = `
-                    <div class="flex flex-wrap justify-between items-center gap-3 mb-4">
-                        <h2 class="text-xl md:text-2xl font-black text-primary">جدول المصنعيات وهوامش الربح وأسعار الأزرار</h2>
-                        <button onclick="if(confirm('إعادة ضبط المصنعيات وإعدادات الربح والأزرار فقط؟ (لن تتأثر أسعار الخامات)')) { store.resetLaborAndConfig(); app.toast('تم ضبط المصنعيات والإعدادات فقط'); app.adminNavigate('labor'); }" class="bg-red-100 text-red-700 px-3 py-2 rounded-lg text-xs font-bold hover:bg-red-200">↺ ضبط المصنعيات والإعدادات فقط</button>
-                    </div>
-
-                    <div class="mb-5 p-4 rounded-xl border-2 ${alerts.length ? 'bg-red-50 border-red-400 text-red-800' : 'bg-green-50 border-green-300 text-green-900'}">
-                        <div class="font-black text-sm mb-1">${alerts.length ? '🚨 إنذار الحماية من الخسارة:' : '✅ جميع الأزرار والباقات فوق حد الأمان المالي:'}</div>
-                        ${alerts.length ? `<ul class="list-disc pr-5 text-xs space-y-1">${alerts.map(a=>`<li>${a}</li>`).join('')}</ul>` : `<div class="text-xs">الحد الأدنى الآمن للربح مضبوط على ${ds.config.min_safe_margin_pct}%.</div>`}
-                    </div>
-
-                    <div class="grid lg:grid-cols-3 gap-5">
-                        <div class="lg:col-span-2 bg-white rounded-2xl shadow-sm border border-gray-200 p-5">
-                            <h3 class="font-black text-primaryDark mb-4 border-b pb-2">خانات المصنعيات (التركيب)</h3>
-                            <div class="grid sm:grid-cols-2 gap-2.5">
-                                ${laborFields.map(([k, lbl]) => `
-                                    <div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl border border-gray-100">
-                                        <span class="text-xs font-bold text-gray-700">${lbl}</span>
-                                        <input type="number" value="${store.labor[k]}" onchange="store.labor['${k}']=Math.max(0, Number(this.value)||0); store.markDirty(); app.adminNavigate('labor')" class="w-20 border-2 border-gray-200 rounded-lg p-1.5 text-center font-black text-primary bg-white">
-                                    </div>`).join('')}
-                            </div>
-                        </div>
-
-                        <div class="space-y-5">
-                            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 space-y-3">
-                                <h3 class="font-black text-primaryDark border-b pb-2">نسب الربح ومعامل الشادو للمسطح</h3>
-                                <div class="flex justify-between items-center text-xs font-bold"><span>هامش ربح الأسقف (%)</span><input type="number" value="${store.config.ceiling_margin_pct}" onchange="store.config.ceiling_margin_pct=Number(this.value)||0; store.markDirty(); app.adminNavigate('labor')" class="w-20 border-2 rounded-lg p-1.5 text-center font-black text-primary"></div>
-                                <div class="flex justify-between items-center text-xs font-bold"><span>هامش الحوائط والأنظمة (%)</span><input type="number" value="${store.config.systems_margin_pct}" onchange="store.config.systems_margin_pct=Number(this.value)||0; store.markDirty(); app.adminNavigate('labor')" class="w-20 border-2 rounded-lg p-1.5 text-center font-black text-primary"></div>
-                                <div class="flex justify-between items-center text-xs font-bold"><span>هامش ربح الأزرار الإضافية (%)</span><input type="number" value="${store.config.addon_margin_pct ?? 35}" onchange="store.config.addon_margin_pct=Number(this.value)||0; store.markDirty(); app.adminNavigate('labor')" class="w-20 border-2 rounded-lg p-1.5 text-center font-black text-gold"></div>
-                                <div class="flex justify-between items-center text-xs font-bold">
-                                    <div><span>معامل شادو المسطح (م.ط/م²)</span><div class="text-[10px] text-gray-400">مثال: 4×4م=1.00 | 3×3م=1.33</div></div>
-                                    <input type="number" step="0.05" value="${store.config.shadow_flat_ratio}" onchange="store.config.shadow_flat_ratio=Math.max(0.5, Number(this.value)||1); store.markDirty(); app.adminNavigate('labor')" class="w-20 border-2 rounded-lg p-1.5 text-center font-black text-amber-700">
-                                </div>
-                                <div class="flex justify-between items-center text-xs font-bold"><span>تقريب السعر للأعلى</span><select onchange="store.config.round_to=Number(this.value); store.markDirty(); app.adminNavigate('labor')" class="w-20 border-2 rounded-lg p-1.5 font-black text-center">${[1,5,10].map(v=>`<option value="${v}" ${store.config.round_to===v?'selected':''}>${v} ج</option>`).join('')}</select></div>
-                            </div>
-
-                            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 space-y-2.5">
-                                <h3 class="font-black text-primaryDark border-b pb-1">بنود إضافية منفصلة في المقايسة (سعر ثابت ج/م.ط، غير مربوطة بالباقات)</h3>
-                                ${[
-                                    ['تركيب مجناتيك', 'magnetic_install_sell', ''],
-                                    ['مجناتيك توريد وتركيب (تلقائي = خامة المتر + التركيب + الربح؛ اكتب رقم لتثبيته)', 'magnetic_supply_sell', (() => { const mu = Engine.addonUnit(ds, 'magneticSupply'); return `خامة ${mu.matLm} + تركيب ${mu.labLm} + ربح ${(mu.sellLm - mu.costLm).toFixed(0)} = ${mu.sellLm} ج تلقائي`; })()],
-                                    ['تفتيح بروفايل', 'profile_open_sell', ''],
-                                    ['زاوية 90 مجناتيك', 'magnetic_corner90_sell', '']
-                                ].map(([label, key, note]) => `<div class="flex justify-between items-center bg-gray-50 p-2.5 rounded-xl border border-gray-100"><span class="text-xs font-bold text-gray-700">${label} (${key==='magnetic_corner90_sell' ? 'ج/قطعة' : 'ج/م.ط'})<div class="text-[10px] text-gray-500 font-normal">${note}</div></span><input type="number" min="0" value="${ov[key] || ''}" placeholder="${key==='magnetic_supply_sell' ? 'تلقائي' : 'غير محدد'}" onchange="store.config.addon_overrides.${key}=Math.max(0, Number(this.value)||0); store.markDirty(); app.adminNavigate('labor')" class="w-24 border-2 rounded-lg p-1.5 text-center font-black text-primary bg-white"></div>`).join('')}
-                                <div class="text-[10px] text-gray-400">تظهر في المقايسة (الصنايعي 2D والمقايسات) وتُحسب لوحدها. السعر صفر = لا يمكن إضافة البند للمقايسة.</div>
-                            </div>
-
-                            <div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-5 space-y-2.5">
-                                <h3 class="font-black text-primaryDark border-b pb-1">سعر بيع الأزرار الإضافية (تلقائي: خامة + مصنعية + ربح)</h3>
-                                ${[
-                                    ['شادو عادي (طولي)', 'م.ط', sh.matLm, sh.labLm, sh.costLm, sh.sellLm, ov.shadow_sell, 'shadow_sell'],
-                                    ['شادو عادي (مسطح)', 'م²', sh.matFlat, sh.labFlat, sh.costFlat, sh.sellFlat, ov.shadow_flat_sell, 'shadow_flat_sell'],
-                                    ['شادو ليد (طولي)', 'م.ط', shl.matLm, shl.labLm, shl.costLm, shl.sellLm, ov.shadow_led_sell, 'shadow_led_sell'],
-                                    ['شادو ليد (مسطح)', 'م²', shl.matFlat, shl.labFlat, shl.costFlat, shl.sellFlat, ov.shadow_led_flat_sell, 'shadow_led_flat_sell'],
-                                    ['كورنر بيد', 'م.ط', cb.matLm, cb.labLm, cb.costLm, cb.sellLm, ov.corner_sell, 'corner_sell'],
-                                    ['إند بيد', 'م.ط', eb.matLm, eb.labLm, eb.costLm, eb.sellLm, ov.end_bead_sell, 'end_bead_sell'],
-                                    ['معجون', 'م.ط', pt.matLm, pt.labLm, pt.costLm, pt.sellLm, ov.putty_sell, 'putty_sell']
-                                ].map(([label, unit, mat, lab, cost, auto, ovVal, key]) => {
-                                    const eff = ovVal > 0 ? ovVal : auto;
-                                    return `<div class="bg-gray-50 rounded-xl p-2.5 border border-gray-100">
-                                        <div class="flex justify-between items-center text-xs"><strong>${label}</strong><span class="font-black text-primary">${eff} ج/${unit}</span></div>
-                                        <div class="text-[10px] text-gray-500 mt-0.5">خامة ${mat.toFixed(1)} + مصنعية ${lab.toFixed(1)} + ربح ${(auto - cost).toFixed(1)} = <span class="font-bold text-gray-700">${auto} ج تلقائي</span>${ovVal > 0 ? ` <span class="text-amber-600 font-bold">(مثبت يدويًا: ${ovVal} ج)</span>` : ''}</div>
-                                        <div class="flex justify-between items-center mt-1"><span class="text-[10px] text-gray-400">تثبيت يدوي (اتركه فارغًا = تلقائي)</span><input type="number" value="${ovVal || ''}" placeholder="${auto}" onchange="store.config.addon_overrides.${key}=Number(this.value)||0; store.markDirty(); app.adminNavigate('labor')" class="w-20 border-2 rounded-lg p-1 text-center font-black bg-white"></div>
-                                    </div>`;
-                                }).join('')}
-                            </div>
-                        </div>
-                    </div>`;
-            },
-
-            // --- ADMIN TAB 3: ALL PRICES PREVIEW & PUBLISH (PACKAGES + WALLS + CEMENT + TILES + EXTRAS) ---
-            renderAdminPackages(container) {
-                const ds = store.getDataset(true);
-                const pubDs = store.getDataset(false);
-                const sec = this.adminPkgSection;
-
-                const wallsMatrix = [
-                    { w:'5', st:'c35', lbl:'حائط 5 سم — صاج 0.35' },
-                    { w:'5', st:'c40', lbl:'حائط 5 سم — صاج 0.40' },
-                    { w:'5', st:'gm50', lbl:'حائط 5 سم — جولدن 0.50' },
-                    { w:'7', st:'c40', lbl:'حائط 7 سم — صاج 0.40' },
-                    { w:'7', st:'gm50', lbl:'حائط 7 سم — جولدن 0.50' },
-                    { w:'7', st:'gm60', lbl:'حائط 7 سم — جولدن 0.60' },
-                    { w:'10', st:'c40', lbl:'حائط 10 سم — صاج 0.40' },
-                    { w:'10', st:'gm50', lbl:'حائط 10 سم — جولدن 0.50' },
-                    { w:'10', st:'gm60', lbl:'حائط 10 سم — جولدن 0.60' }
-                ];
-
-                const cementBoards = [
-                    { id:115, name:'كناوف 12مم OUT DOOR' },
-                    { id:116, name:'كناوف 12مم IN DOOR' },
-                    { id:117, name:'جي بورد 12مم' },
-                    { id:118, name:'توب بورد 12مم' },
-                    { id:119, name:'جي بورد 9مم' }
-                ];
-
-                const tilesList = [
-                    { id:24, name:'جبس كناوف ديكوراما 7مم', sys:'layin' },
-                    { id:23, name:'جبس كناوف سادة 7مم', sys:'layin' },
-                    { id:25, name:'جبس كناوف 9مم', sys:'layin' },
-                    { id:26, name:'جبس كناوف 12مم', sys:'layin' },
-                    { id:21, name:'جبس جيبورد 9مم', sys:'layin' },
-                    { id:137, name:'صاج 60×60 ظاهر (Lay-in)', sys:'layin' },
-                    { id:139, name:'صاج 60×60 مخفي (Clip-in)', sys:'clipin' },
-                    { id:138, name:'ألمنيوم 60×60 ظاهر (Lay-in)', sys:'layin' },
-                    { id:140, name:'ألمنيوم 60×60 مخفي (Clip-in)', sys:'clipin' }
-                ];
-
-                const marginSys = 1 + ds.config.systems_margin_pct/100;
-                const extrasRows = [
-                    ...[110,111,112,113,114].map(id => {
-                        const m = ds.materials.find(x=>x.id===id);
-                        const cost = m.price + ds.labor.access_panel_pc;
-                        const sell = Engine.roundUp(cost * marginSys, ds.config.round_to);
-                        return { name: m.name, unit:'قطعة', cost, sell };
-                    }),
-                    { name: 'شادو جاب عادي (م.ط)', unit:'م.ط', cost: Engine.addonUnit(ds,'shadow').costLm, sell: Engine.addonUnit(ds,'shadow').sellLm },
-                    { name: 'شادو جاب عادي (مسطح)', unit:'م²', cost: Engine.addonUnit(ds,'shadow').costFlat, sell: Engine.addonUnit(ds,'shadow').sellFlat },
-                    { name: 'شادو جاب ليد (م.ط)', unit:'م.ط', cost: Engine.addonUnit(ds,'shadowLed').costLm, sell: Engine.addonUnit(ds,'shadowLed').sellLm },
-                    { name: 'شادو جاب ليد (مسطح)', unit:'م²', cost: Engine.addonUnit(ds,'shadowLed').costFlat, sell: Engine.addonUnit(ds,'shadowLed').sellFlat },
-                    { name: 'كورنر بيد (م.ط)', unit:'م.ط', cost: Engine.addonUnit(ds,'corner').costLm, sell: Engine.addonUnit(ds,'corner').sellLm },
-                    { name: 'إند بيد (م.ط)', unit:'م.ط', cost: Engine.addonUnit(ds,'endBead').costLm, sell: Engine.addonUnit(ds,'endBead').sellLm },
-                    { name: 'معجون (م.ط)', unit:'م.ط', cost: Engine.addonUnit(ds,'putty').costLm, sell: Engine.addonUnit(ds,'putty').sellLm }
-                ];
-
-                let bodyHtml = '';
-                if (sec === 'ceilings') {
-                    bodyHtml = `
-                        <div class="bg-white rounded-2xl shadow overflow-x-auto border">
-                            <table class="w-full text-xs md:text-sm text-right">
-                                <thead class="bg-primaryDark text-white">
-                                    <tr><th class="p-3">الباقة</th><th class="p-3">تكلفة المسطح</th><th class="p-3">بيع المسطح</th><th class="p-3">ربح المسطح</th><th class="p-3">تكلفة الطولي</th><th class="p-3">بيع الطولي</th><th class="p-3">ربح الطولي</th></tr>
-                                </thead>
-                                <tbody class="divide-y">
-                                    ${PACKAGES_DEF.map(p => {
-                                        const defAddons = p.auto_beads ? { corner:true, endBead:true } : {};
-                                        const d = Engine.calcPackage(ds, p.id, this.adminPkgColor, defAddons);
-                                        const pub = Engine.calcPackage(pubDs, p.id, this.adminPkgColor, defAddons);
-                                        return `<tr class="hover:bg-gray-50">
-                                            <td class="p-3 font-black text-primaryDark">${p.name}${p.auto_beads?'<div class="text-[10px] text-green-700">شامل كورنر + إند بيد تلقائياً</div>':''}</td>
-                                            <td class="p-3">${d.flatCost.toFixed(1)} ج</td>
-                                            <td class="p-3 font-black text-primary text-base">${d.flatPrice} ج ${d.flatPrice!==pub.flatPrice?`<span class="text-[10px] text-gray-400 line-through">${pub.flatPrice}</span>`:''}</td>
-                                            <td class="p-3 font-bold text-green-700">${d.flatProfit.toFixed(1)} ج (${d.flatMarginPct.toFixed(1)}%)</td>
-                                            <td class="p-3">${d.coveCost.toFixed(1)} ج</td>
-                                            <td class="p-3 font-black text-primaryDark text-base">${d.covePrice} ج ${d.covePrice!==pub.covePrice?`<span class="text-[10px] text-gray-400 line-through">${pub.covePrice}</span>`:''}</td>
-                                            <td class="p-3 font-bold text-green-700">${d.coveProfit.toFixed(1)} ج (${d.coveMarginPct.toFixed(1)}%)</td>
-                                        </tr>`;
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        </div>`;
-                } else if (sec === 'walls') {
-                    bodyHtml = `
-                        <div class="bg-white rounded-2xl shadow overflow-x-auto border">
-                            <table class="w-full text-xs md:text-sm text-right">
-                                <thead class="bg-primaryDark text-white">
-                                    <tr><th class="p-3">القطاع والصاج (كناوف — ${this.adminPkgColor==='white'?'أبيض':this.adminPkgColor==='green'?'أخضر':'أحمر'})</th><th class="p-3 text-center">تجليد وجه واحد</th><th class="p-3 text-center">قاطع وجهين W111</th><th class="p-3 text-center">قاطع دبل W112</th></tr>
-                                </thead>
-                                <tbody class="divide-y">
-                                    ${wallsMatrix.map(r => {
-                                        const c1 = Engine.calcWall(ds, { system:'cladding', width:r.w, steel:r.st, brand:'knauf', color:this.adminPkgColor, rockwool:false });
-                                        const w1 = Engine.calcWall(ds, { system:'w111', width:r.w, steel:r.st, brand:'knauf', color:this.adminPkgColor, rockwool:false });
-                                        const w2 = Engine.calcWall(ds, { system:'w112', width:r.w, steel:r.st, brand:'knauf', color:this.adminPkgColor, rockwool:false });
-                                        return `<tr class="hover:bg-gray-50">
-                                            <td class="p-3 font-bold">${r.lbl}</td>
-                                            <td class="p-3 text-center"><span class="font-black text-primary">${c1.sellPrice} ج</span><div class="text-[10px] text-gray-400">تكلفة ${c1.totalCost.toFixed(0)} ج</div></td>
-                                            <td class="p-3 text-center"><span class="font-black text-primaryDark">${w1.sellPrice} ج</span><div class="text-[10px] text-gray-400">تكلفة ${w1.totalCost.toFixed(0)} ج</div></td>
-                                            <td class="p-3 text-center"><span class="font-black text-amber-700">${w2.sellPrice} ج</span><div class="text-[10px] text-gray-400">تكلفة ${w2.totalCost.toFixed(0)} ج</div></td>
-                                        </tr>`;
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        </div>`;
-                } else if (sec === 'cement') {
-                    bodyHtml = `
-                        <div class="bg-white rounded-2xl shadow overflow-x-auto border">
-                            <table class="w-full text-xs md:text-sm text-right">
-                                <thead class="bg-primaryDark text-white">
-                                    <tr><th class="p-3">لوح السيمنت بورد (2.88 م² — جولدن 0.60)</th><th class="p-3 text-center">حائط 5سم (وجه)</th><th class="p-3 text-center">حائط 7سم (وجه)</th><th class="p-3 text-center">حائط 10سم (وجه)</th><th class="p-3 text-center">قاطع 7سم (وجهين)</th><th class="p-3 text-center">سقف سيمنت</th></tr>
-                                </thead>
-                                <tbody class="divide-y">
-                                    ${cementBoards.map(b => {
-                                        const w5 = Engine.calcCement(ds, { type:'wall1', width:'5', steel:'gm60', boardId:b.id });
-                                        const w7 = Engine.calcCement(ds, { type:'wall1', width:'7', steel:'gm60', boardId:b.id });
-                                        const w10 = Engine.calcCement(ds, { type:'wall1', width:'10', steel:'gm60', boardId:b.id });
-                                        const w2 = Engine.calcCement(ds, { type:'wall2', width:'7', steel:'gm60', boardId:b.id });
-                                        const cl = Engine.calcCement(ds, { type:'ceiling', boardId:b.id });
-                                        return `<tr class="hover:bg-gray-50">
-                                            <td class="p-3 font-bold">${b.name}</td>
-                                            <td class="p-3 text-center font-black text-primary">${w5.sellPrice} ج</td>
-                                            <td class="p-3 text-center font-black text-primary">${w7.sellPrice} ج</td>
-                                            <td class="p-3 text-center font-black text-primary">${w10.sellPrice} ج</td>
-                                            <td class="p-3 text-center font-black text-primaryDark">${w2.sellPrice} ج</td>
-                                            <td class="p-3 text-center font-black text-amber-700">${cl.sellPrice} ج</td>
-                                        </tr>`;
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        </div>`;
-                } else if (sec === 'tiles') {
-                    bodyHtml = `
-                        <div class="bg-white rounded-2xl shadow overflow-x-auto border">
-                            <table class="w-full text-xs md:text-sm text-right">
-                                <thead class="bg-primaryDark text-white">
-                                    <tr><th class="p-3">نوع البلاطة 60×60</th><th class="p-3">النظام</th><th class="p-3 text-center">التكلفة</th><th class="p-3 text-center">سعر البيع</th></tr>
-                                </thead>
-                                <tbody class="divide-y">
-                                    ${tilesList.map(t => {
-                                        const r = Engine.calcTile60(ds, { tileId:t.id, systemType:t.sys });
-                                        return `<tr class="hover:bg-gray-50">
-                                            <td class="p-3 font-bold">${t.name}</td>
-                                            <td class="p-3 text-gray-500">${t.sys==='clipin'?'مخفي Clip-in':'ظاهر T-Grid'}</td>
-                                            <td class="p-3 text-center">${r.missing ? '—' : r.totalCost.toFixed(1)+' ج'}</td>
-                                            <td class="p-3 text-center font-black ${r.missing?'text-red-600':'text-primary'}">${r.missing ? 'نواقص (اطلب عرض سعر)' : r.sellPrice+' ج/م²'}</td>
-                                        </tr>`;
-                                    }).join('')}
-                                </tbody>
-                            </table>
-                        </div>`;
-                } else {
-                    bodyHtml = `
-                        <div class="bg-white rounded-2xl shadow overflow-x-auto border">
-                            <table class="w-full text-xs md:text-sm text-right">
-                                <thead class="bg-primaryDark text-white">
-                                    <tr><th class="p-3">البند / الإكسسوار</th><th class="p-3 text-center">الوحدة</th><th class="p-3 text-center">التكلفة المباشرة</th><th class="p-3 text-center">سعر البيع</th><th class="p-3 text-center">صافي الربح</th></tr>
-                                </thead>
-                                <tbody class="divide-y">
-                                    ${extrasRows.map(e => `<tr class="hover:bg-gray-50"><td class="p-3 font-bold">${e.name}</td><td class="p-3 text-center text-gray-500">${e.unit}</td><td class="p-3 text-center">${e.cost.toFixed(1)} ج</td><td class="p-3 text-center font-black text-primary">${e.sell} ج</td><td class="p-3 text-center font-bold text-green-700">${(e.sell-e.cost).toFixed(1)} ج</td></tr>`).join('')}
-                                </tbody>
-                            </table>
-                        </div>`;
-                }
-
-                container.innerHTML = `
-                    <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-3 mb-4">
-                        <div>
-                            <h2 class="text-xl md:text-2xl font-black text-primary">معاينة أسعار الجميع قبل النشر والمزامنة</h2>
-                            <p class="text-xs text-gray-500">آخر نشر للموقع العام: <strong>${store.published.publishedAt}</strong></p>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-2">
-                            <select onchange="app.adminPkgColor=this.value; app.adminNavigate('packages')" class="border-2 rounded-xl px-3 py-2 text-xs font-bold bg-white">
-                                <option value="white" ${this.adminPkgColor==='white'?'selected':''}>⚪ أبيض</option>
-                                <option value="green" ${this.adminPkgColor==='green'?'selected':''}>🟢 أخضر</option>
-                                <option value="red" ${this.adminPkgColor==='red'?'selected':''}>🔴 أحمر</option>
-                            </select>
-                            <button onclick="if(confirm('إلغاء التعديلات غير المنشورة واسترجاع آخر نسخة منشورة؟')) { store.revertToPublished(); app.toast('تم استرجاع آخر نشر'); app.adminNavigate('packages'); }" class="bg-gray-200 text-gray-800 font-bold px-3 py-2 rounded-xl text-xs">↺ استرجاع آخر نشر</button>
-                            <button onclick="store.publish(); app.toast('تم اعتماد ونشر أسعار الجميع للموقع العام!'); app.adminNavigate('packages')" class="bg-gold text-primaryDark font-black px-5 py-2 rounded-xl shadow hover:bg-goldDark text-xs md:text-sm">✓ اعتماد ومزامنة الجميع</button>
-                        </div>
-                    </div>
-
-                    <!-- All Systems Sub-Tabs inside Packages & Publish -->
-                    <div class="flex gap-2 overflow-x-auto no-scrollbar pb-2 mb-4">
-                        ${[
-                            ['ceilings', '🏠 الباقات الـ 5 (مسطح + طولي)'],
-                            ['walls', '🧱 الحوائط والتجاليد (5/7/10 سم)'],
-                            ['cement', '🛡️ السيمنت بورد (5/7/10 سم + سقف)'],
-                            ['tiles', '⬜ بلاطات 60×60'],
-                            ['extras', '🚪 أبواب الكشف والشادو والإكسسوارات']
-                        ].map(([k, lbl]) => `
-                            <button onclick="app.adminPkgSection='${k}'; app.adminNavigate('packages')" class="px-4 py-2 rounded-xl text-xs font-bold whitespace-nowrap transition ${sec===k?'bg-primary text-gold shadow':'bg-white border text-gray-600 hover:border-primary'}">${lbl}</button>
-                        `).join('')}
-                    </div>
-
-                    ${bodyHtml}`;
-            }
         };
 
         document.addEventListener('DOMContentLoaded', async () => {
-            try { await applyRemoteConfig(); } catch (e) { /* بدون إنترنت: نكمل بالأسعار المدمجة */ }
+            await loadCatalog();
             store = new Store();
+            if (store.isAdmin) await loadCosts();
             app.init();
+            refreshCatalog().then(ok => { if (ok && app.currentView && ['prices','calc','home'].includes(app.currentView)) app.navigate(app.currentView); });
         });
     </script>
 </body>
