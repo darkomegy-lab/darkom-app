@@ -1358,8 +1358,13 @@
                 const taxable = sub - disc;
                 const vat = doc.vat ? Math.round(taxable * 0.14) : 0;
                 const total = taxable + vat;
-                const dep = Math.min(Math.max(Number(doc.deposit) || 0, 0), total);
+                const dep = (doc.type === 'invoice' && doc.paid) ? total : Math.min(Math.max(Number(doc.deposit) || 0, 0), total);
                 return { sub, disc, vat, total, dep, balance: total - dep };
+            },
+            payStatus(doc) {
+                if (doc.type !== 'invoice') return null;
+                const t = this.docTotals(doc);
+                return (t.total > 0 && t.dep >= t.total) ? 'paid' : (t.dep > 0 ? 'partial' : 'unpaid');
             },
             docDateStr(iso) { const d = new Date(iso); return String(d.getDate()).padStart(2, '0') + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + d.getFullYear(); },
             esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])); },
@@ -1397,7 +1402,7 @@
                 const tk = sessionStorage.getItem('darkom_admin_token'); if (!tk) return false;
                 try {
                     const r = await fetch(PRICING_API + '/api/admin/quotes', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tk },
-                        body: JSON.stringify({ code: x.verify.code, doc_no: x.no, doc_type: x.type, issued_at: x.date, total: this.docTotals(x).total, client: x.client || '', status: status || 'valid' }) });
+                        body: JSON.stringify({ code: x.verify.code, doc_no: x.no, doc_type: x.type, issued_at: x.date, total: this.docTotals(x).total, paid: x.type === 'invoice' ? this.docTotals(x).dep : 0, client: x.client || '', status: status || 'valid' }) });
                     if (r.status === 401) { if (!this._authWarned) { this._authWarned = true; this.toast('سجّل الدخول من جديد لتفعيل رمز التحقق'); } return false; }
                     if (!r.ok) return false;
                     if (!status) { const d2 = this.loadDocs(); const y = d2.list.find(z => z.id === id); if (y && y.verify) { y.verify.synced = true; this.saveDocs(d2); } }
@@ -1419,7 +1424,7 @@
                 return list.slice(0, 40).map(x => {
                     const tt = this.docTotals(x);
                     return `<div class="flex items-center justify-between gap-2 bg-gray-50 border border-gray-100 rounded-xl p-2.5 text-xs">
-                        <div class="min-w-0"><div class="font-black text-primaryDark">${x.type === 'invoice' ? '🧾' : '📄'} ${x.no} ${x.type === 'invoice' ? (x.paid ? '<span class="text-green-700">(مدفوعة)</span>' : '<span class="text-red-600">(غير مدفوعة)</span>') : ''}</div>
+                        <div class="min-w-0"><div class="font-black text-primaryDark">${x.type === 'invoice' ? '🧾' : '📄'} ${x.no} ${x.type === 'invoice' ? ({ paid: '<span class="text-green-700">(مدفوعة)</span>', partial: '<span class="text-amber-700">(سداد جزئي)</span>', unpaid: '<span class="text-red-600">(غير مدفوعة)</span>' })[this.payStatus(x)] : ''}</div>
                         <div class="text-gray-500 truncate">${this.esc(x.client || 'بدون اسم')} — ${this.docDateStr(x.date)} — ${this.fmt(tt.total)} ج</div></div>
                         <div class="flex gap-1 shrink-0"><button onclick="app.showDoc('${x.id}')" class="bg-primary text-gold px-2.5 py-1 rounded-lg font-bold">فتح</button><button onclick="app.deleteDoc('${x.id}')" class="text-red-500 font-bold px-1">✕</button></div></div>`;
                 }).join('');
@@ -1437,7 +1442,9 @@
                 const line = (l, v, strong) => `<div style="display:flex;justify-content:space-between;padding:7px 14px;${strong ? 'font-weight:900;' : ''}border-bottom:1px solid #E5E7EB"><span>${l}</span><span>${v}</span></div>`;
                 const validUntil = new Date(new Date(doc.date).getTime() + 7 * 86400000).toISOString();
                 const clientRow = (l, v) => v ? `<div><span style="color:#6B7280">${l}:</span> <strong>${this.esc(v)}</strong></div>` : '';
-                const stamp = isInv ? `<div style="display:inline-block;border:3px solid ${doc.paid ? '#15803D' : '#B91C1C'};color:${doc.paid ? '#15803D' : '#B91C1C'};font-weight:900;font-size:20px;padding:4px 18px;border-radius:10px;transform:rotate(-6deg);margin-top:6px">${doc.paid ? 'مدفوعة' : 'غير مدفوعة'}</div>` : '';
+                const ps = this.payStatus(doc);
+                const psCol = { paid: '#15803D', partial: '#B45309', unpaid: '#B91C1C' }[ps], psLbl = { paid: 'مدفوعة', partial: 'سداد جزئي', unpaid: 'غير مدفوعة' }[ps];
+                const stamp = isInv ? `<div style="display:inline-block;border:3px solid ${psCol};color:${psCol};font-weight:900;font-size:20px;padding:4px 18px;border-radius:10px;transform:rotate(-6deg);margin-top:6px">${psLbl}</div>` : '';
                 return `<div dir="rtl" style="width:794px;min-height:1123px;box-sizing:border-box;background:#fff;color:#1F2937;font-family:'Cairo',Tahoma,Arial,sans-serif;font-size:14px;padding:34px 38px;position:relative">
                     <div style="background:#E6EBD6;border-radius:16px;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;color:#2B3615">
                         <div style="display:flex;align-items:center;gap:14px">
@@ -1468,7 +1475,7 @@
                             ${t.disc ? line('الخصم', '- ' + this.fmt(t.disc) + ' ج') : ''}
                             ${doc.vat ? line('ضريبة القيمة المضافة 14%', this.fmt(t.vat) + ' ج') : ''}
                             <div style="display:flex;justify-content:space-between;padding:12px 14px;background:#F0CE41;color:#2B3615;font-weight:900;font-size:18px"><span>الإجمالي</span><span>${this.fmt(t.total)} ج.م</span></div>
-                            ${t.dep ? line('العربون المدفوع', this.fmt(t.dep) + ' ج') : ''}
+                            ${t.dep ? line(isInv ? 'المدفوع حتى الآن' : 'العربون المدفوع', this.fmt(t.dep) + ' ج') : ''}
                             ${t.dep ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;font-weight:900;color:#2B3615"><span>المتبقي</span><span>${this.fmt(t.balance)} ج</span></div>` : ''}
                         </div>
                     </div>
@@ -1485,8 +1492,8 @@
                 if (!doc.verify) return '';
                 let svg = '';
                 try { const qr = qrcode(0, 'M'); qr.addData(this.verifyUrl(doc)); qr.make(); svg = qr.createSvgTag({ cellSize: 3, margin: 0, scalable: true }); } catch (e) { return ''; }
-                return `<div style="margin-top:14px;display:flex;align-items:center;gap:14px;border:1px dashed #9CA3AF;border-radius:12px;padding:10px 14px">
-                    <div style="width:92px;height:92px;flex-shrink:0">${svg.replace('<svg ', '<svg width="92" height="92" ')}</div>
+                return `<div style="margin-top:12px;display:flex;align-items:center;gap:12px;border:1px dashed #9CA3AF;border-radius:10px;padding:8px 12px">
+                    <div style="width:64px;height:64px;flex-shrink:0">${svg.replace('<svg ', '<svg width="64" height="64" ')}</div>
                     <div style="font-size:12px;line-height:1.9;color:#374151"><strong style="color:#52652A">تحقق من صحة المستند</strong><br>امسح الكود للتأكد إن المستند صادر فعلاً من داركم وإن الإجمالي مطابق.<br><span style="direction:ltr;display:inline-block;font-size:11px">${this.esc(this.verifyUrl(doc))}</span><br>كود التحقق: <strong style="direction:ltr;display:inline-block;letter-spacing:1px">${doc.verify.code}</strong></div></div>`;
             },
             showDoc(id) {
@@ -1501,7 +1508,7 @@
                         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;font-weight:700;margin-bottom:8px">
                             <span style="font-weight:900;color:#14351D">${isInv ? '🧾 فاتورة' : '📄 عرض سعر'} ${doc.no}</span>
                             <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" ${doc.vat ? 'checked' : ''} onchange="app.updateDoc('${id}',{vat:this.checked}); app.showDoc('${id}')"> ضريبة قيمة مضافة 14%</label>
-                            ${isInv ? `<label style="display:flex;align-items:center;gap:4px"><input type="checkbox" ${doc.paid ? 'checked' : ''} onchange="app.updateDoc('${id}',{paid:this.checked}); app.showDoc('${id}')"> مدفوعة</label>` : ''}
+                            ${isInv ? `<label style="display:flex;align-items:center;gap:4px">المدفوع حتى الآن (ج) <input type="number" min="0" value="${doc.deposit || ''}" placeholder="0" style="width:90px;border:1px solid #ccc;border-radius:8px;padding:3px 6px" onchange="app.updateDoc('${id}',{deposit:Math.max(0,parseFloat(this.value)||0),paid:false}); app.showDoc('${id}')"></label><label style="display:flex;align-items:center;gap:4px"><input type="checkbox" ${doc.paid ? 'checked' : ''} onchange="app.updateDoc('${id}',{paid:this.checked}); app.showDoc('${id}')"> مدفوعة بالكامل</label>` : ''}
                             <button onclick="document.getElementById('doc-overlay').remove()" style="margin-right:auto;background:#E5E7EB;border-radius:8px;padding:5px 12px;font-weight:800">✕ إغلاق</button>
                         </div>
                         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:6px;font-size:12px;font-weight:800">
