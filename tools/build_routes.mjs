@@ -31,6 +31,7 @@ for (const [view, dir] of Object.entries(dirs)) {
   const [title, desc] = meta[view]; const url = `${SITE}/${dir}/`;
   let h = html;
   h = h.replace('<head>', '<head>\n    <base href="/">');
+  h = h.replace(/\s*<script type="application\/ld\+json">\s*\{"@context":"https:\/\/schema.org","@type":"HomeAndConstructionBusiness"[\s\S]*?<\/script>/, '');
   h = h.replace(/<title>[\s\S]*?<\/title>/, `<title>${esc(title)}</title>`);
   h = h.replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${esc(desc)}">`);
   h = h.replace(/<link rel="canonical" href="[^"]*">/, `<link rel="canonical" href="${url}">`);

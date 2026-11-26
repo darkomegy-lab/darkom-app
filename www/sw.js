@@ -1,4 +1,4 @@
-const CACHE_NAME = 'darkom-gypsum-pro-v42';
+const CACHE_NAME = 'darkom-gypsum-pro-v43';
 const ASSETS = ['./', './index.html', './catalog.default.json', './tailwind.css', './prices/', './works/', './calc/', './faq/', './manifest.json', './icons/icon-192.png', './icons/icon-512.png', './vendor/html2canvas.min.js', './vendor/jspdf.umd.min.js', './vendor/qrcode.js'];
 self.addEventListener('install', (e) => { e.waitUntil(caches.open(CACHE_NAME).then((c) => c.addAll(ASSETS))); self.skipWaiting(); });
 self.addEventListener('activate', (e) => { e.waitUntil(caches.keys().then((ks) => Promise.all(ks.filter((k) => k !== CACHE_NAME).map((k) => caches.delete(k))))); self.clients.claim(); });
