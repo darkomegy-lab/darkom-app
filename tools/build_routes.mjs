@@ -10,7 +10,7 @@ if (SITE !== cur) { html = html.split(cur).join(SITE); fs.writeFileSync(path.joi
 const grab = (re) => { const m = html.match(re); if (!m) throw new Error('missing ' + re); return m[0]; };
 const ctx = {};
 vm.createContext(ctx);
-vm.runInContext(grab(/const BUSINESS_PHONE = [^;]*;/) + grab(/const WARRANTY_YEARS = [^;]*;/) + grab(/const WARRANTY_LABEL = [^;]*;/) + grab(/const SERVICE_AREAS = \[[^\]]*\];/).replace(/const /g, 'var '), ctx);
+vm.runInContext((grab(/const BUSINESS_PHONE = [^;]*;/) + grab(/const WARRANTY_YEARS = [^;]*;/) + grab(/const WARRANTY_LABEL = [^;]*;/) + grab(/const SERVICE_AREAS = \[[^\]]*\];/).replace(/const /g, 'var ')).replace(/const /g, "var "), ctx);
 const meta = vm.runInNewContext('(' + html.match(/const SEO_META = (\{[\s\S]*?\n        \});/)[1] + ')');
 const faqSrc = html.match(/faqList\(\) \{\s*return (\[[\s\S]*?\n                \]);/)[1];
 const faqs = vm.runInNewContext('(' + faqSrc + ')', { WARRANTY_LABEL: ctx.WARRANTY_LABEL, SERVICE_AREAS: ctx.SERVICE_AREAS, BUSINESS_PHONE: ctx.BUSINESS_PHONE });
