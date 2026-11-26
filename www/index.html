@@ -105,7 +105,6 @@
         <div class="max-w-7xl mx-auto px-4 flex justify-center gap-6 h-14 items-center">
             <button data-view="home" onclick="app.navigate('home')" class="desktop-nav-btn active h-full px-3 font-bold text-gray-600 hover:text-primary transition">الباقات والأسقف</button>
             <button data-view="prices" onclick="app.navigate('prices')" class="desktop-nav-btn h-full px-3 font-bold text-gray-600 hover:text-primary transition">الحوائط والأنظمة الأخرى</button>
-            <button data-view="worker" onclick="app.navigate('worker')" class="desktop-nav-btn h-full px-3 font-bold text-gray-600 hover:text-primary transition">حاسبة الصنايعي 2D</button>
             <button data-view="portfolio" onclick="app.navigate('portfolio')" class="desktop-nav-btn h-full px-3 font-bold text-gray-600 hover:text-primary transition">أعمالنا وخدماتنا</button>
             <button data-view="calc" onclick="app.navigate('calc')" class="desktop-nav-btn h-full px-3 font-bold text-gray-600 hover:text-primary transition">⚡ احسب سعرك</button>
             <button data-view="faq" onclick="app.navigate('faq')" class="desktop-nav-btn h-full px-3 font-bold text-gray-600 hover:text-primary transition">أسئلة شائعة</button>
@@ -130,14 +129,10 @@
 
     <!-- Mobile Public Bottom Navigation -->
     <nav id="public-nav" class="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-[0_-4px_10px_rgba(0,0,0,0.08)] z-40 md:hidden safe-area-bottom">
-        <div class="grid grid-cols-5 items-end h-16 pb-1">
+        <div class="grid grid-cols-4 items-end h-16 pb-1">
             <button data-view="prices" onclick="app.navigate('prices')" class="nav-item flex flex-col items-center p-1.5 text-[11px] font-bold">
                 <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                 أسعار أخرى
-            </button>
-            <button data-view="worker" onclick="app.navigate('worker')" class="nav-item flex flex-col items-center p-1.5 text-[11px] font-bold">
-                <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 4a2 2 0 114 0v1a1 1 0 001 1h3a1 1 0 011 1v3a1 1 0 01-1 1h-1a2 2 0 100 4h1a1 1 0 011 1v3a1 1 0 01-1 1h-3a1 1 0 01-1-1v-1a2 2 0 10-4 0v1a1 1 0 01-1 1H7a1 1 0 01-1-1v-3a1 1 0 00-1-1H4a2 2 0 110-4h1a1 1 0 001-1V7a1 1 0 011-1h3a1 1 0 001-1V4z"/></svg>
-                الصنايعي 2D
             </button>
             <button data-view="home" onclick="app.navigate('home')" class="nav-item nav-home active flex flex-col items-center p-1.5 text-[11px] font-bold">
                 <div class="nav-circle rounded-full p-2 -mt-7 border-4 border-white shadow-md">
@@ -590,7 +585,7 @@
                 if (view === 'home') this.renderHome(main);
                 else if (view === 'prices') this.renderPrices(main);
                 else if (view === 'calc') this.renderCalc(main);
-                else if (view === 'worker') this.renderWorker(main, false);
+                else if (view === 'worker') this.navigate('home');
                 else if (view === 'portfolio') this.renderPortfolio(main);
                 else if (view === 'faq') this.renderFaq(main);
                 window.scrollTo({ top: 0, behavior: 'smooth' });
