@@ -16,6 +16,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="vendor/html2canvas.min.js"></script>
     <script src="vendor/jspdf.umd.min.js"></script>
+    <script src="vendor/qrcode.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -1375,15 +1376,40 @@
                     client: q.client || '', phone: q.phone || '', email: q.email || '', address: q.address || '', project: q.project || '',
                     items: q.items.map(it => ({ label: it.label, unit: it.unit, qty: it.qty, unitSell: it.unitSell })),
                     discount: Number(q.discount) || 0, vat: !!q.vat, deposit: Number(q.deposit) || 0,
-                    notes: q.notes || '', paid: !!q.paid, payMethod: q.payMethod || ''
+                    notes: q.notes || '', paid: !!q.paid, payMethod: q.payMethod || '',
+                    verify: { code: this.genVerifyCode(), synced: false }
                 };
                 d.list.unshift(doc); this.saveDocs(d);
+                this.registerDoc(doc.id);
                 this.showDoc(doc.id);
             },
             getDoc(id) { return this.loadDocs().list.find(x => x.id === id); },
-            updateDoc(id, patch) { const d = this.loadDocs(); const x = d.list.find(y => y.id === id); if (x) { Object.assign(x, patch); this.saveDocs(d); } return x; },
+            updateDoc(id, patch) { const d = this.loadDocs(); const x = d.list.find(y => y.id === id); if (x) { Object.assign(x, patch); if (x.verify) x.verify.synced = false; this.saveDocs(d); this.registerDoc(id); } return x; },
+            // --- التحقق من المستندات: رقم تحقق عشوائي + QR. السيرفر يخزن الرقم والتاريخ والإجمالي واسم العميل فقط ---
+            genVerifyCode() {
+                const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', b = new Uint8Array(10); crypto.getRandomValues(b);
+                return Array.from(b, x => A[x % A.length]).join('');
+            },
+            verifyUrl(doc) { return PRICING_API + '/v/' + doc.verify.code; },
+            async registerDoc(id, status) {
+                const d = this.loadDocs(); const x = d.list.find(y => y.id === id);
+                if (!x || !x.verify) return false;
+                const tk = sessionStorage.getItem('darkom_admin_token'); if (!tk) return false;
+                try {
+                    const r = await fetch(PRICING_API + '/api/admin/quotes', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tk },
+                        body: JSON.stringify({ code: x.verify.code, doc_no: x.no, doc_type: x.type, issued_at: x.date, total: this.docTotals(x).total, client: x.client || '', status: status || 'valid' }) });
+                    if (r.status === 401) { if (!this._authWarned) { this._authWarned = true; this.toast('سجّل الدخول من جديد لتفعيل رمز التحقق'); } return false; }
+                    if (!r.ok) return false;
+                    if (!status) { const d2 = this.loadDocs(); const y = d2.list.find(z => z.id === id); if (y && y.verify) { y.verify.synced = true; this.saveDocs(d2); } }
+                    return true;
+                } catch (e) { return false; }
+            },
+            async syncPendingDocs() {
+                for (const x of this.loadDocs().list) { if (!x.verify) { const d = this.loadDocs(); const y = d.list.find(z => z.id === x.id); y.verify = { code: this.genVerifyCode(), synced: false }; this.saveDocs(d); } if (!x.verify || !x.verify.synced) await this.registerDoc(x.id); }
+            },
             deleteDoc(id) {
-                if (!confirm('حذف المستند من السجل؟ (الرقم لن يُعاد استخدامه)')) return;
+                if (!confirm('حذف المستند من السجل؟ (الرقم لن يُعاد استخدامه). رمز التحقق الخاص به سيصبح "ملغي".')) return;
+                this.registerDoc(id, 'void');
                 const d = this.loadDocs(); d.list = d.list.filter(x => x.id !== id); this.saveDocs(d);
                 this.adminNavigate('worker_quotes');
             },
@@ -1452,10 +1478,20 @@
                         ضمان تنفيذ ${WARRANTY_LABEL} ضد عيوب التركيب (على التركيب فقط، ولا يشمل تلف الخامات من تسريب مياه أو سوء استخدام).<br>
                         للتأكيد أو الاستفسار: ${BUSINESS_PHONE} (واتساب / اتصال) — الحي السابع، الشيخ زايد، محافظة الجيزة — ${WORKING_HOURS}.
                     </div>
+                    ${this.verifyBlockHtml(doc)}
                 </div>`;
+            },
+            verifyBlockHtml(doc) {
+                if (!doc.verify) return '';
+                let svg = '';
+                try { const qr = qrcode(0, 'M'); qr.addData(this.verifyUrl(doc)); qr.make(); svg = qr.createSvgTag({ cellSize: 3, margin: 0, scalable: true }); } catch (e) { return ''; }
+                return `<div style="margin-top:14px;display:flex;align-items:center;gap:14px;border:1px dashed #9CA3AF;border-radius:12px;padding:10px 14px">
+                    <div style="width:92px;height:92px;flex-shrink:0">${svg.replace('<svg ', '<svg width="92" height="92" ')}</div>
+                    <div style="font-size:12px;line-height:1.9;color:#374151"><strong style="color:#52652A">تحقق من صحة المستند</strong><br>امسح الكود للتأكد إن المستند صادر فعلاً من داركم وإن الإجمالي مطابق.<br><span style="direction:ltr;display:inline-block;font-size:11px">${this.esc(this.verifyUrl(doc))}</span><br>كود التحقق: <strong style="direction:ltr;display:inline-block;letter-spacing:1px">${doc.verify.code}</strong></div></div>`;
             },
             showDoc(id) {
                 const doc = this.getDoc(id); if (!doc) return;
+                if (!doc.verify) { this.syncPendingDocs().then(() => { if (this.getDoc(id).verify) this.showDoc(id); }); }
                 let ov = document.getElementById('doc-overlay');
                 if (!ov) { ov = document.createElement('div'); ov.id = 'doc-overlay'; ov.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(15,23,20,.82);overflow:auto;-webkit-overflow-scrolling:touch'; document.body.appendChild(ov); }
                 const scale = Math.min(1, ((ov.clientWidth || window.innerWidth) - 24) / 794);
@@ -1817,7 +1853,7 @@
                         if (!r.ok) { err.textContent = 'بيانات الدخول غير صحيحة'; return; }
                         const j = await r.json();
                         sessionStorage.setItem('darkom_admin_token', j.token); sessionStorage.setItem('darkom_admin', 'true');
-                        store.isAdmin = true; await loadCosts(); close();
+                        store.isAdmin = true; this._authWarned = false; await loadCosts(); close(); app.syncPendingDocs();
                         this.updateNavVisibility(); this.adminNavigate('worker_quotes');
                         this.toast('مرحباً بك في لوحة الإدارة');
                     } catch (e) { err.textContent = 'تعذر الاتصال بالسيرفر'; }
@@ -1846,6 +1882,7 @@
             store = new Store();
             if (store.isAdmin) await loadCosts();
             app.init();
+            if (store.isAdmin) app.syncPendingDocs();
             refreshCatalog().then(ok => { if (ok && app.currentView && ['prices','calc','home'].includes(app.currentView)) app.navigate(app.currentView); });
         });
     </script>
