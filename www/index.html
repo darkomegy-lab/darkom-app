@@ -107,7 +107,7 @@
     <!-- Desktop Public Top Nav -->
     <nav id="desktop-nav" class="hidden md:block fixed top-[66px] w-full bg-white border-b border-gray-200 z-40 shadow-sm">
         <div class="max-w-7xl mx-auto px-4 flex justify-center gap-6 h-14 items-center">
-            <button data-view="home" onclick="app.navigate('home')" class="desktop-nav-btn active h-full px-3 font-bold text-gray-600 hover:text-primary transition">الباقات والأسقف</button>
+            <button data-view="home" onclick="app.navigate('home')" class="desktop-nav-btn active h-full px-3 font-bold text-gray-600 hover:text-primary transition">المستويات والأسقف</button>
             <button data-view="prices" onclick="app.navigate('prices')" class="desktop-nav-btn h-full px-3 font-bold text-gray-600 hover:text-primary transition">الحوائط والأنظمة الأخرى</button>
             <button data-view="portfolio" onclick="app.navigate('portfolio')" class="desktop-nav-btn h-full px-3 font-bold text-gray-600 hover:text-primary transition">أعمالنا وخدماتنا</button>
             <button data-view="calc" onclick="app.navigate('calc')" class="desktop-nav-btn h-full px-3 font-bold text-gray-600 hover:text-primary transition">⚡ احسب سعرك</button>
@@ -142,7 +142,7 @@
                 <div class="nav-circle rounded-full p-2 -mt-7 border-4 border-white shadow-md">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>
                 </div>
-                <span class="mt-0.5">الباقات</span>
+                <span class="mt-0.5">المستويات</span>
             </button>
             <button data-view="portfolio" onclick="app.navigate('portfolio')" class="nav-item flex flex-col items-center p-1.5 text-[11px] font-bold">
                 <svg class="w-5 h-5 mb-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
@@ -391,31 +391,31 @@
 
         const PACKAGES_DEF = [
             {
-                id: 'eco', name: 'اقتصادية', badge: 'الأوفر سعراً',
+                id: 'eco', name: 'اقتصادي', badge: 'الأوفر سعراً',
                 spec: 'صاج 0.35 مم + ألواح جيبورد 3م + تعليق جنش',
                 boardIds: { white: 5, green: 6, red: 7 },
                 angleId: 30, omegaId: 31, cId: 32, includes_tish: false, auto_beads: false
             },
             {
-                id: 'basic', name: 'أساسية', badge: '',
+                id: 'basic', name: 'أساسي', badge: '',
                 spec: 'صاج 0.35 مم + ألواح كناوف 3م + تعليق جنش',
                 boardIds: { white: 1, green: 2, red: 3 },
                 angleId: 30, omegaId: 31, cId: 32, includes_tish: false, auto_beads: false
             },
             {
-                id: 'standard', name: 'قياسية', badge: 'الأكثر طلباً', popular: true,
+                id: 'standard', name: 'قياسي', badge: 'الأكثر طلباً', popular: true,
                 spec: 'صاج 0.40 مم + ألواح كناوف 3م + تعليق جنش',
                 boardIds: { white: 1, green: 2, red: 3 },
                 angleId: 33, omegaId: 34, cId: 35, includes_tish: false, auto_beads: false
             },
             {
-                id: 'premium', name: 'مميزة', badge: 'هندسي معتمد',
+                id: 'premium', name: 'مميز', badge: 'هندسي معتمد',
                 spec: 'صاج جولدن ميتال 0.50 مم + ألواح كناوف 3م + تيش + كورنر وإند بيد مفعّلين تلقائياً',
                 boardIds: { white: 1, green: 2, red: 3 },
                 angleId: 94, omegaId: 93, cId: 92, includes_tish: true, auto_beads: true
             },
             {
-                id: 'pro', name: 'ملكية', badge: 'أعلى متانة',
+                id: 'pro', name: 'ملكي', badge: 'أعلى متانة',
                 spec: 'صاج جولدن ميتال 0.60 مم + ألواح كناوف 3م + تيش + كورنر وإند بيد مفعّلين تلقائياً',
                 boardIds: { white: 1, green: 2, red: 3 },
                 angleId: 97, omegaId: 96, cId: 95, includes_tish: true, auto_beads: true
@@ -606,8 +606,8 @@
                             <span class="inline-block bg-gold/20 text-gold text-[10px] md:text-xs font-bold px-2.5 py-0.5 rounded-full">أسعار شفافة بالمتر — توريد وتركيب</span>
                             <span class="inline-block bg-white/15 text-white text-[10px] md:text-xs font-bold px-2.5 py-0.5 rounded-full">🛡️ ضمان ${WARRANTY_LABEL}</span>
                         </div>
-                        <h2 class="text-lg md:text-3xl font-black mb-1 leading-snug">باقات الأسقف المعلقة الجبس بورد</h2>
-                        <p class="text-gray-200 text-xs md:text-sm leading-relaxed">قارن الباقات الـ 5 بسعر المتر المسطح والطولي (بيت النور) وجرّب الترقيات فوراً.</p>
+                        <h2 class="text-lg md:text-3xl font-black mb-1 leading-snug">مستويات الأسقف المعلقة الجبس بورد</h2>
+                        <p class="text-gray-200 text-xs md:text-sm leading-relaxed">قارن المستويات الـ 5 بسعر المتر المسطح والطولي (بيت النور) وجرّب الترقيات فوراً.</p>
                         <div class="grid grid-cols-2 md:flex gap-2 mt-3">
                             <button onclick="app.navigate('calc')" class="bg-white text-primaryDark px-3 py-2 rounded-xl font-black text-xs shadow hover:bg-gray-100 transition">⚡ احسب سعر شقتك</button>
                             <button onclick="app.navigate('faq')" class="bg-white/15 text-white px-3 py-2 rounded-xl font-bold text-xs hover:bg-white/25 transition">❓ أسئلة شائعة</button>
@@ -623,6 +623,8 @@
                             <button onclick="app.setColor('red')" class="px-2 md:px-5 py-2 rounded-xl text-xs md:text-sm font-bold transition ${this.currentPackageColor==='red'?'bg-red-600 text-white shadow':'text-gray-600 hover:bg-gray-100'}">🔴 أحمر<span class="hidden md:inline"> (مقاوم للحريق)</span></button>
                         </div>
                     </div>
+
+                    <div class="flex items-center justify-center gap-2 bg-gold/20 border border-gold rounded-xl px-3 py-2.5 mb-4 text-center text-primaryDark font-black text-sm md:text-base">📏 الأسعار بالمتر، توريد وتركيب — السعر المكتوب هو سعر المتر الواحد وليس إجمالي المشروع</div>
 
                     <div id="packages-grid"></div>
 
@@ -669,7 +671,7 @@
                     if (addons.corner) activeNames.push('كورنر بيد');
                     if (addons.endBead) activeNames.push('إند بيد');
 
-                    const waText = `مرحباً داركم، أستفسر عن باقة ${pkg.name} (ألواح: ${colorInfo.label})${activeNames.length ? ' + إضافات: ' + activeNames.join('، ') : ''} — مسطح ${res.flatPrice} ج/م² | طولي ${res.covePrice} ج/م.ط`;
+                    const waText = `مرحباً داركم، أستفسر عن مستوى ${pkg.name} (ألواح: ${colorInfo.label})${activeNames.length ? ' + إضافات: ' + activeNames.join('، ') : ''} — مسطح ${res.flatPrice} ج/م² | طولي ${res.covePrice} ج/م.ط`;
 
                     return `
                         <div class="glass-panel rounded-2xl p-5 shadow-md hover:shadow-xl transition flex flex-col justify-between border-t-4 ${pkg.popular ? 'border-gold ring-2 ring-gold/50 shadow-lg shadow-gold/20' : (pkg.id==='pro'?'border-gold':(pkg.id==='premium'?'border-green-600':'border-primary'))}">
@@ -677,7 +679,7 @@
                                 <div class="flex justify-between items-start gap-2 mb-2">
                                     <div>
                                         ${pkg.badge ? `<span class="text-[11px] font-bold ${pkg.popular ? 'bg-gold text-primaryDark' : 'text-primary bg-primary/10'} px-2.5 py-0.5 rounded-full">${pkg.badge}</span>` : ''}
-                                        <h3 class="text-lg font-black text-primaryDark mt-1.5">باقة ${pkg.name}</h3>
+                                        <h3 class="text-lg font-black text-primaryDark mt-1.5">مستوى ${pkg.name}</h3>
                                     </div>
                                     <span class="${colorInfo.cls} text-[11px] font-bold px-2.5 py-1 rounded-lg whitespace-nowrap">${colorInfo.label}</span>
                                 </div>
@@ -687,22 +689,22 @@
                                 <div class="bg-gray-50 rounded-xl p-3.5 mb-4 border border-gray-100 space-y-2.5">
                                     <div class="flex justify-between items-center border-b border-gray-200 pb-2">
                                         <div>
-                                            <div class="text-xs font-bold text-gray-700">سعر المتر المسطح</div>
+                                            <div class="text-xs font-black text-gray-800">سعر المتر المسطح</div><div class="text-[11px] font-bold text-primary">السعر للمتر المربع الواحد (م²)</div>
                                             ${flatColorDelta > 0 ? `<div class="text-[10px] text-green-700 font-bold">يشمل فرق اللون (+${flatColorDelta} ج/م²)</div>` : ''}
                                             ${(addons.shadow || addons.shadowLed) ? `<div class="text-[10px] text-amber-700 font-bold">شامل شادو محيطي (${shRatio} م.ط/م²)</div>` : ''}
                                         </div>
                                         <div class="text-left">
-                                            ${res.missing ? `<span class="text-sm font-bold text-goldDark">اطلب عرض سعر</span>` : `<span class="text-2xl font-black text-primary">${res.flatPrice}</span> <span class="text-xs font-bold text-gray-500">ج.م / م²</span>`}
+                                            ${res.missing ? `<span class="text-sm font-bold text-goldDark">اطلب عرض سعر</span>` : `<span class="text-2xl font-black text-primary">${res.flatPrice}</span> <span class="text-xs font-black text-primary">ج.م / م²</span>`}
                                         </div>
                                     </div>
                                     <div class="flex justify-between items-center">
                                         <div>
-                                            <div class="text-xs font-bold text-gray-700">سعر المتر الطولي (بيت النور)</div>
+                                            <div class="text-xs font-black text-gray-800">سعر المتر الطولي (بيت النور)</div><div class="text-[11px] font-bold text-primary">السعر للمتر الطولي الواحد (م.ط)</div>
                                             ${coveColorDelta > 0 ? `<div class="text-[10px] text-green-700 font-bold">يشمل فرق اللون (+${coveColorDelta} ج/م.ط)</div>` : ''}
                                             ${(addons.shadow || addons.shadowLed || addons.corner || addons.endBead) ? `<div class="text-[10px] text-primary font-bold">شامل الإضافات المفعّلة</div>` : ''}
                                         </div>
                                         <div class="text-left">
-                                            ${res.missing ? `<span class="text-xs text-gray-400">—</span>` : `<span class="text-xl font-black text-primaryDark">${res.covePrice}</span> <span class="text-xs font-bold text-gray-500">ج.م / م.ط</span>`}
+                                            ${res.missing ? `<span class="text-xs text-gray-400">—</span>` : `<span class="text-xl font-black text-primaryDark">${res.covePrice}</span> <span class="text-xs font-black text-primary">ج.م / م.ط</span>`}
                                         </div>
                                     </div>
                                 </div>
@@ -729,7 +731,7 @@
                             </div>
 
                             <a href="https://wa.me/201025013991?text=${encodeURIComponent(waText)}" target="_blank" class="block w-full bg-primary hover:bg-primaryDark text-white text-center py-3 rounded-xl font-bold text-sm transition shadow">
-                                اطلب معاينة لهذه الباقة
+                                اطلب معاينة لهذا المستوى
                             </a>
                         </div>`;
                 }).join('');
@@ -1162,7 +1164,7 @@
                                 <div class="text-xs font-black text-primaryDark">⚡ تحويل سريع من مقاسات الغرف 2D أعلاه:</div>
                                 <div class="grid grid-cols-2 gap-2">
                                     <select onchange="app.quoteDraft.pkgId=this.value" class="border rounded-lg px-2 py-1.5 text-xs font-bold bg-white">
-                                        ${PACKAGES_DEF.map(p=>`<option value="${p.id}" ${q.pkgId===p.id?'selected':''}>باقة ${p.name}</option>`).join('')}
+                                        ${PACKAGES_DEF.map(p=>`<option value="${p.id}" ${q.pkgId===p.id?'selected':''}>مستوى ${p.name}</option>`).join('')}
                                     </select>
                                     <select onchange="app.quoteDraft.color=this.value" class="border rounded-lg px-2 py-1.5 text-xs font-bold bg-white">
                                         <option value="white" ${q.color==='white'?'selected':''}>⚪ أبيض</option>
@@ -1180,8 +1182,8 @@
                                     <input type="text" placeholder="رقم الموبايل" value="${q.phone}" onchange="app.quoteDraft.phone=this.value" class="border-2 rounded-xl px-3 py-2 text-xs font-bold">
                                 </div>
                                 <select id="q-item-type" class="w-full border-2 rounded-xl px-2 py-2 text-xs font-bold">
-                                    ${PACKAGES_DEF.map(p=>`<option value="flat_${p.id}">سقف مسطح — باقة ${p.name}</option>`).join('')}
-                                    ${PACKAGES_DEF.map(p=>`<option value="cove_${p.id}">بيت نور طولي — باقة ${p.name}</option>`).join('')}
+                                    ${PACKAGES_DEF.map(p=>`<option value="flat_${p.id}">سقف مسطح — مستوى ${p.name}</option>`).join('')}
+                                    ${PACKAGES_DEF.map(p=>`<option value="cove_${p.id}">بيت نور طولي — مستوى ${p.name}</option>`).join('')}
                                     <option value="wall_w111_7_c40">حائط قاطع W111 (7سم – 0.40 – كناوف)</option>
                                     <option value="cem_wall1_7_117">سيمنت بورد 12مم جي بورد (حائط 7سم وجه)</option>
                                     <option value="shadow_normal">شادو جاب عادي (م.ط)</option>
@@ -1261,7 +1263,7 @@
                                         <tr><th class="p-2">البند</th><th class="p-2 text-center">الكمية</th><th class="p-2 text-center">سعر الوحدة</th><th class="p-2 text-center">الإجمالي</th><th class="p-2 no-print"></th></tr>
                                     </thead>
                                     <tbody class="divide-y">
-                                        ${q.items.map((it, idx)=>`<tr><td class="p-2 font-bold">${it.label}</td><td class="p-2 text-center">${it.qty} ${it.unit}</td><td class="p-2 text-center">${it.unitSell} ج</td><td class="p-2 text-center font-black text-primary">${Math.round(it.unitSell*it.qty).toLocaleString()} ج</td><td class="p-2 no-print"><button onclick="app.quoteDraft.items.splice(${idx},1); app.adminNavigate('worker_quotes')" class="text-red-500 font-bold">✕</button></td></tr>`).join('')}
+                                        ${q.items.map((it, idx)=>`<tr><td class="p-2 font-bold">${it.label}</td><td class="p-2 text-center">${it.qty} ${it.unit}</td><td class="p-2 text-center">${it.unitSell} ج / ${it.unit}</td><td class="p-2 text-center font-black text-primary">${Math.round(it.unitSell*it.qty).toLocaleString()} ج</td><td class="p-2 no-print"><button onclick="app.quoteDraft.items.splice(${idx},1); app.adminNavigate('worker_quotes')" class="text-red-500 font-bold">✕</button></td></tr>`).join('')}
                                     </tbody>
                                 </table>
                                 <div class="bg-primaryDark text-white rounded-xl p-4 flex justify-between items-center">
@@ -1290,7 +1292,7 @@
                     if (rm.type === 'ceiling') {
                         const area = Number((Lm * Wm).toFixed(2));
                         const perim = Number((2 * (Lm + Wm)).toFixed(2));
-                        q.items.push({ label: `${rm.name} — سقف فلات (باقة ${pkg.name} ${colorLbl})`, unit: 'م²', qty: area, unitCost: rBase.flatCost, unitSell: rBase.flatPrice });
+                        q.items.push({ label: `${rm.name} — سقف فلات (مستوى ${pkg.name} ${colorLbl})`, unit: 'م²', qty: area, unitCost: rBase.flatCost, unitSell: rBase.flatPrice });
                         if (rm.shadow === 'normal') {
                             const sh = Engine.addonUnit(ds, 'shadow');
                             q.items.push({ label: `${rm.name} — شادو جاب عادي محيطي`, unit: 'م.ط', qty: perim, unitCost: sh.costLm, unitSell: sh.sellLm });
@@ -1300,7 +1302,7 @@
                         }
                     } else if (rm.type === 'cove') {
                         const lm = Number(Lm.toFixed(2));
-                        q.items.push({ label: `${rm.name} — بيت نور طولي (باقة ${pkg.name} ${colorLbl})`, unit: 'م.ط', qty: lm, unitCost: rBase.coveCost, unitSell: rBase.covePrice });
+                        q.items.push({ label: `${rm.name} — بيت نور طولي (مستوى ${pkg.name} ${colorLbl})`, unit: 'م.ط', qty: lm, unitCost: rBase.coveCost, unitSell: rBase.covePrice });
                         if (rm.shadow === 'normal') {
                             const sh = Engine.addonUnit(ds, 'shadow');
                             q.items.push({ label: `${rm.name} — شادو جاب عادي`, unit: 'م.ط', qty: lm, unitCost: sh.costLm, unitSell: sh.sellLm });
@@ -1335,10 +1337,10 @@
                 let item = null;
                 if (val.startsWith('flat_')) {
                     const pid = val.replace('flat_', ''), p = PACKAGES_DEF.find(x=>x.id===pid), r = Engine.calcPackage(ds, pid, this.quoteDraft.color, p.auto_beads ? {corner:true,endBead:true} : {});
-                    item = { label: `سقف مسطح — باقة ${p.name}`, unit: 'م²', qty, unitCost: r.flatCost, unitSell: r.flatPrice };
+                    item = { label: `سقف مسطح — مستوى ${p.name}`, unit: 'م²', qty, unitCost: r.flatCost, unitSell: r.flatPrice };
                 } else if (val.startsWith('cove_')) {
                     const pid = val.replace('cove_', ''), p = PACKAGES_DEF.find(x=>x.id===pid), r = Engine.calcPackage(ds, pid, this.quoteDraft.color, p.auto_beads ? {corner:true,endBead:true} : {});
-                    item = { label: `بيت نور طولي — باقة ${p.name}`, unit: 'م.ط', qty, unitCost: r.coveCost, unitSell: r.covePrice };
+                    item = { label: `بيت نور طولي — مستوى ${p.name}`, unit: 'م.ط', qty, unitCost: r.coveCost, unitSell: r.covePrice };
                 } else if (val === 'wall_w111_7_c40') {
                     const r = Engine.calcWall(ds, { system:'w111', width:'7', steel:'c40', brand:'knauf', color:'white', rockwool:false });
                     item = { label: 'قاطع W111 (7سم – 0.40 – كناوف)', unit: 'م²', qty, unitCost: r.totalCost, unitSell: r.sellPrice };
@@ -1532,7 +1534,7 @@
                     <td style="padding:9px 8px;text-align:center;border-bottom:1px solid #E5E7EB;width:34px">${i + 1}</td>
                     <td style="padding:9px 8px;text-align:right;border-bottom:1px solid #E5E7EB;font-weight:700">${this.esc(it.label)}</td>
                     <td style="padding:9px 8px;text-align:center;border-bottom:1px solid #E5E7EB;white-space:nowrap">${Number(it.qty)} ${this.esc(it.unit)}</td>
-                    <td style="padding:9px 8px;text-align:center;border-bottom:1px solid #E5E7EB;white-space:nowrap">${this.fmt(it.unitSell)}</td>
+                    <td style="padding:9px 8px;text-align:center;border-bottom:1px solid #E5E7EB;white-space:nowrap">${this.fmt(it.unitSell)} <span style="font-size:10px;color:#6B7280">/ ${this.esc(it.unit)}</span></td>
                     <td style="padding:9px 8px;text-align:center;border-bottom:1px solid #E5E7EB;font-weight:900;color:#2B3615;white-space:nowrap">${this.fmt(it.unitSell * it.qty)}</td></tr>`).join('');
                 const line = (l, v, strong) => `<div style="display:flex;justify-content:space-between;padding:7px 14px;${strong ? 'font-weight:900;' : ''}border-bottom:1px solid #E5E7EB"><span>${l}</span><span>${v}</span></div>`;
                 const validUntil = new Date(new Date(doc.date).getTime() + 7 * 86400000).toISOString();
@@ -1801,7 +1803,7 @@
                 const total = res.missing ? null : Math.round(res.flatPrice * s.area + res.covePrice * (s.cove || 0));
                 const colorLbl = { white: 'أبيض', green: 'أخضر', red: 'أحمر' }[s.color];
                 const pkg = PACKAGES_DEF.find(p => p.id === s.pkgId);
-                const waText = `مرحباً داركم، حسبت من التطبيق: باقة ${pkg.name} (${colorLbl}) لمساحة ${s.area} م²${s.cove ? ' + ' + s.cove + ' م.ط بيت نور' : ''} ≈ ${total ? total.toLocaleString() : ''} ج — عايز معاينة`;
+                const waText = `مرحباً داركم، حسبت من التطبيق: مستوى ${pkg.name} (${colorLbl}) لمساحة ${s.area} م²${s.cove ? ' + ' + s.cove + ' م.ط بيت نور' : ''} ≈ ${total ? total.toLocaleString() : ''} ج — عايز معاينة`;
                 container.innerHTML = `
                     <div class="max-w-2xl mx-auto">
                         <div class="text-center mb-6">
@@ -1819,8 +1821,8 @@
                                 <div class="text-[11px] text-gray-400 mt-1">مثال: ريسبشن 4×5 = 20 م² | غرفة 4×4 = 16 م²</div>
                             </div>
                             <div>
-                                <div class="text-xs font-extrabold text-primary mb-2">2. اختار الباقة:</div>
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${PACKAGES_DEF.map(p => `<button onclick="app.calcSel.pkgId='${p.id}'; app.renderCalc(document.getElementById('main-content'))" class="py-2.5 px-3 rounded-xl border-2 text-xs font-bold text-right ${s.pkgId===p.id?'border-primary bg-primary text-white':'border-gray-200'}">باقة ${p.name}</button>`).join('')}</div>
+                                <div class="text-xs font-extrabold text-primary mb-2">2. اختار المستوى:</div>
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">${PACKAGES_DEF.map(p => `<button onclick="app.calcSel.pkgId='${p.id}'; app.renderCalc(document.getElementById('main-content'))" class="py-2.5 px-3 rounded-xl border-2 text-xs font-bold text-right ${s.pkgId===p.id?'border-primary bg-primary text-white':'border-gray-200'}">مستوى ${p.name}</button>`).join('')}</div>
                             </div>
                             <div>
                                 <div class="text-xs font-extrabold text-primary mb-2">3. لون الألواح:</div>
@@ -1844,7 +1846,7 @@
                         </div>
                         <div class="bg-gradient-to-l from-primaryDark to-primary text-white rounded-2xl p-6 mt-5 text-center shadow-lg">
                             ${total === null ? `
-                                <div class="text-xl font-black text-gold mb-2">في بنود ناقصة التسعير في الباقة دي</div>
+                                <div class="text-xl font-black text-gold mb-2">في بنود ناقصة التسعير في المستوى ده</div>
                                 <p class="text-sm text-gray-200 mb-4">ابعتلنا واتساب وهنرد عليك بعرض سعر فوري</p>
                             ` : `
                                 <div class="text-xs text-gray-200 mb-1">التقدير الإجمالي (${s.area} م²${s.cove ? ' + ' + s.cove + ' م.ط' : ''})</div>
