@@ -166,6 +166,15 @@
         const STORAGE_VERSION = 'darkom_v15_srv_2026';
         const APP_VERSION = '1.3.0';
         const DEFAULT_BIZ_NAME = 'داركم للجبس بورد';
+        const DOC_BASE_THEME = { primary: '#52652A', light: '#E6EBD6', thead: '#D3DDB6', accent: '#F0CE41', dark: '#2B3615', sub: '#68754A' };
+        const DOC_THEMES = [
+            { name: 'زيتوني', ...DOC_BASE_THEME },
+            { name: 'أزرق ملكي', primary: '#1E3A8A', light: '#DBE5F7', thead: '#C3D3F0', accent: '#F59E0B', dark: '#172554', sub: '#475E9C' },
+            { name: 'أخضر زمردي', primary: '#0F766E', light: '#D5EFEB', thead: '#BFE3DE', accent: '#F0B429', dark: '#134E4A', sub: '#3F8A82' },
+            { name: 'عنابي', primary: '#7F1D1D', light: '#F5DEDE', thead: '#EBC5C5', accent: '#D4A017', dark: '#450A0A', sub: '#A04A4A' },
+            { name: 'فحمي', primary: '#1F2937', light: '#E5E7EB', thead: '#D1D5DB', accent: '#F0CE41', dark: '#111827', sub: '#6B7280' },
+            { name: 'ذهبي بني', primary: '#92400E', light: '#FBEBD2', thead: '#F3D9AE', accent: '#CA8A04', dark: '#451A03', sub: '#A16207' }
+        ];
         const DEFAULT_BIZ_SUB = 'DARKOM GYPSUM PRO — أسقف وحوائط وعزل';
         const BUSINESS_PHONE = '01025013991';
         const BUSINESS_PHONE_INTL = '201025013991';
@@ -1453,7 +1462,53 @@
                         <div class="flex gap-1 shrink-0"><button onclick="app.showDoc('${x.id}')" class="bg-primary text-gold px-2.5 py-1 rounded-lg font-bold">فتح</button><button onclick="app.deleteDoc('${x.id}')" class="text-red-500 font-bold px-1">✕</button></div></div>`;
                 }).join('');
             },
+            docTheme(doc) {
+                if (doc.customColor && /^#[0-9a-fA-F]{6}$/.test(doc.customColor)) {
+                    const mix = (h, o, a) => { const c = [1, 3, 5].map(i => parseInt(h.slice(i, i + 2), 16)), d = [1, 3, 5].map(i => parseInt(o.slice(i, i + 2), 16)); return '#' + c.map((v, i) => Math.round(v * (1 - a) + d[i] * a).toString(16).padStart(2, '0')).join('').toUpperCase(); };
+                    const pr = doc.customColor.toUpperCase();
+                    return { primary: pr, light: mix(pr, '#FFFFFF', .85), thead: mix(pr, '#FFFFFF', .72), accent: DOC_BASE_THEME.accent, dark: mix(pr, '#000000', .55), sub: mix(pr, '#FFFFFF', .25) };
+                }
+                return DOC_THEMES[Number(doc.theme) || 0] || DOC_THEMES[0];
+            },
             docHtml(doc) {
+                let h = this.docHtmlBase(doc);
+                const th = this.docTheme(doc), B = DOC_BASE_THEME, keys = ['primary', 'light', 'thead', 'accent', 'dark', 'sub'];
+                if (th !== DOC_THEMES[0]) { keys.forEach(k => { h = h.split(B[k]).join('@@' + k); }); keys.forEach(k => { h = h.split('@@' + k).join(th[k]); }); }
+                const lay = doc.layout || 'A';
+                if (lay !== 'A') {
+                    const cut = h.indexOf('height:6px;background:'); if (cut < 0) return h;
+                    let hd = h.slice(0, cut), rest = h.slice(cut);
+                    const bar = 'height:6px;background:' + th.accent + ';border-radius:3px;margin:12px 0 18px';
+                    if (lay === 'B') {
+                        hd = hd.replace(`background:${th.light};border-radius:16px;padding:20px 24px`, `background:#fff;border-radius:0;padding:4px 0 14px;border-bottom:4px solid ${th.primary}`);
+                        rest = rest.replace(bar, 'height:0;margin:10px 0 14px')
+                            .replace(`background:${th.thead};color:${th.dark}`, `background:#fff;color:${th.primary};border-bottom:2px solid ${th.primary}`)
+                            .replace(`padding:12px 14px;background:${th.accent};color:${th.dark}`, `padding:12px 14px;background:${th.light};color:${th.dark}`)
+                            .replace('background:#F4F7F5;border-radius:12px', 'background:#fff;border-radius:0;border-top:1px solid #E5E7EB;border-bottom:1px solid #E5E7EB');
+                    } else if (lay === 'C') {
+                        hd = hd.replace(`background:${th.light};border-radius:16px;padding:20px 24px`, `background:${th.primary};border-radius:0 0 22px 22px;padding:26px 28px;margin:-34px -38px 0`)
+                            .split(`color:${th.dark}`).join('color:#fff').split(`color:${th.primary}`).join('color:#fff').split(`color:${th.sub}`).join('color:#E5E7EB')
+                            .replace(`rx="20" fill="${th.primary}"`, 'rx="20" fill="#fff"');
+                        rest = rest.replace(bar, `height:6px;background:${th.accent};border-radius:3px;margin:14px 0 18px;width:40%`)
+                            .replace(`background:${th.thead};color:${th.dark}`, `background:${th.dark};color:#fff`);
+                    }
+                    h = hd + rest;
+                }
+                return h;
+            },
+            logoUpload(id, input) {
+                const f = input.files && input.files[0]; if (!f) return;
+                const rd = new FileReader();
+                rd.onload = () => { const im = new Image(); im.onload = () => {
+                    const m = 240, s = Math.min(1, m / Math.max(im.width, im.height)), c = document.createElement('canvas');
+                    c.width = Math.max(1, Math.round(im.width * s)); c.height = Math.max(1, Math.round(im.height * s));
+                    c.getContext('2d').drawImage(im, 0, 0, c.width, c.height);
+                    let data = c.toDataURL('image/png'); if (data.length > 200000) data = c.toDataURL('image/jpeg', 0.85);
+                    this.updateDoc(id, { logoData: data, showLogo: true }); this.showDoc(id);
+                }; im.onerror = () => this.toast('الصورة غير مدعومة'); im.src = rd.result; };
+                rd.readAsDataURL(f);
+            },
+            docHtmlBase(doc) {
                 const t = this.docTotals(doc);
                 const isInv = doc.type === 'invoice';
                 const title = isInv ? 'فاتورة' : 'عرض سعر';
@@ -1472,7 +1527,7 @@
                 return `<div dir="rtl" style="width:794px;min-height:1123px;box-sizing:border-box;background:#fff;color:#1F2937;font-family:'Cairo',Tahoma,Arial,sans-serif;font-size:14px;padding:34px 38px;position:relative">
                     <div style="background:#E6EBD6;border-radius:16px;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;color:#2B3615">
                         <div style="display:flex;align-items:center;gap:14px">
-                            ${doc.showLogo === false ? '' : `<svg viewBox="0 0 100 100" width="66" height="66" style="border-radius:14px;flex-shrink:0"><rect width="100" height="100" rx="20" fill="#52652A"/><g transform="translate(12 12) scale(.76)"><path d="M10,40 L50,15 L90,40 L90,85 L10,85 Z" fill="#F0CE41"/><rect x="30" y="50" width="18" height="18" fill="#52652A"/><rect x="52" y="50" width="18" height="18" fill="#F0CE41" stroke="#52652A" stroke-width="2"/><rect x="30" y="70" width="18" height="15" fill="#F0CE41" stroke="#52652A" stroke-width="2"/><rect x="52" y="70" width="18" height="15" fill="#52652A"/></g></svg>`}
+                            ${doc.showLogo === false ? '' : doc.logoData ? `<img src="${doc.logoData}" style="width:66px;height:66px;object-fit:contain;border-radius:14px;flex-shrink:0;background:#fff">` : `<svg viewBox="0 0 100 100" width="66" height="66" style="border-radius:14px;flex-shrink:0"><rect width="100" height="100" rx="20" fill="#52652A"/><g transform="translate(12 12) scale(.76)"><path d="M10,40 L50,15 L90,40 L90,85 L10,85 Z" fill="#F0CE41"/><rect x="30" y="50" width="18" height="18" fill="#52652A"/><rect x="52" y="50" width="18" height="18" fill="#F0CE41" stroke="#52652A" stroke-width="2"/><rect x="30" y="70" width="18" height="15" fill="#F0CE41" stroke="#52652A" stroke-width="2"/><rect x="52" y="70" width="18" height="15" fill="#52652A"/></g></svg>`}
                             <div><div style="font-size:26px;font-weight:900;color:#52652A;line-height:1.5;margin-bottom:8px">${this.esc(doc.bizName || DEFAULT_BIZ_NAME)}</div>
                             <div style="font-size:12px;line-height:1.7;color:#68754A">${this.esc(doc.bizSub != null ? doc.bizSub : DEFAULT_BIZ_SUB)}</div></div>
                         </div>
@@ -1535,16 +1590,30 @@
                         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;font-weight:700;margin-bottom:8px">
                             <span style="font-weight:900;color:#14351D">${isInv ? '🧾 فاتورة' : '📄 عرض سعر'} ${doc.no}</span>
                             <details style="flex-basis:100%;background:#F4F7F5;border-radius:10px;padding:6px 10px" ${this._editOpen ? 'open' : ''} ontoggle="app._editOpen=this.open">
-                                <summary style="cursor:pointer;font-weight:900;color:#52652A">✏️ تعديل بيانات الجهة والنصوص (للمستند ده فقط)</summary>
+                                <summary style="cursor:pointer;font-weight:900;color:#52652A">✏️ تعديل الجهة والنصوص والألوان والشكل والشعار (للمستند ده فقط)</summary>
                                 <div style="display:grid;gap:6px;margin-top:8px;font-weight:700">
                                     <label>اسم الجهة <input type="text" maxlength="60" value="${this.esc(doc.bizName || DEFAULT_BIZ_NAME)}" style="width:100%;border:1px solid #ccc;border-radius:8px;padding:4px 6px" onchange="app.updateDoc('${id}',{bizName:(this.value.trim()||DEFAULT_BIZ_NAME)}); app.showDoc('${id}')"></label>
                                     <label>السطر تحت الاسم (فاضي = يتشال) <input type="text" maxlength="90" value="${this.esc(doc.bizSub != null ? doc.bizSub : DEFAULT_BIZ_SUB)}" style="width:100%;border:1px solid #ccc;border-radius:8px;padding:4px 6px" onchange="app.updateDoc('${id}',{bizSub:this.value}); app.showDoc('${id}')"></label>
                                     <label>سطر الشروط الأول (فاضي = يتشال) <textarea rows="2" maxlength="300" style="width:100%;border:1px solid #ccc;border-radius:8px;padding:4px 6px" onchange="app.updateDoc('${id}',{terms:this.value}); app.showDoc('${id}')">${this.esc(doc.terms != null ? doc.terms : (isInv ? 'شكراً لتعاملكم مع ' + (doc.bizName || 'داركم') + '.' : 'الأسعار توريد وتركيب ومصنعية، غير شاملة الدهانات النهائية. العرض صالح 7 أيام من تاريخه.'))}</textarea></label>
                                     <label>سطر التواصل والعنوان (فاضي = يتشال) <textarea rows="2" maxlength="300" style="width:100%;border:1px solid #ccc;border-radius:8px;padding:4px 6px" onchange="app.updateDoc('${id}',{contactLine:this.value}); app.showDoc('${id}')">${this.esc(doc.contactLine != null ? doc.contactLine : 'للتأكيد أو الاستفسار: ' + BUSINESS_PHONE + ' (واتساب / اتصال)' + (doc.showAddress === false ? '' : ' — الحي السابع، الشيخ زايد، محافظة الجيزة') + ' — ' + WORKING_HOURS + '.')}</textarea></label>
+                                    <div style="font-weight:900;color:#52652A;margin-top:4px">🎨 اللون</div>
+                                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                                        ${DOC_THEMES.map((th, i) => `<button title="${th.name}" onclick="app.updateDoc('${id}',{theme:${i},customColor:undefined}); app.showDoc('${id}')" style="width:34px;height:34px;border-radius:50%;background:${th.primary};border:3px solid ${(!doc.customColor && (Number(doc.theme) || 0) === i) ? '#F0CE41' : '#fff'};box-shadow:0 0 0 1px #999"></button>`).join('')}
+                                        <label style="display:flex;align-items:center;gap:4px">لون حر <input type="color" value="${doc.customColor || '#52652A'}" onchange="app.updateDoc('${id}',{customColor:this.value}); app.showDoc('${id}')" style="width:36px;height:30px;border:none;background:none"></label>
+                                    </div>
+                                    <div style="font-weight:900;color:#52652A;margin-top:4px">📐 الشكل</div>
+                                    <div style="display:flex;gap:8px">
+                                        ${[['A', 'كلاسيك'], ['B', 'مينيمال'], ['C', 'جريء']].map(([k, n]) => `<button onclick="app.updateDoc('${id}',{layout:'${k}'}); app.showDoc('${id}')" style="padding:5px 14px;border-radius:8px;border:2px solid ${((doc.layout || 'A') === k) ? '#52652A' : '#ccc'};background:${((doc.layout || 'A') === k) ? '#E6EBD6' : '#fff'}">${n}</button>`).join('')}
+                                    </div>
+                                    <div style="font-weight:900;color:#52652A;margin-top:4px">🖼️ الشعار</div>
+                                    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                                        <label style="background:#fff;border:1px solid #ccc;border-radius:8px;padding:5px 10px;cursor:pointer">📤 رفع شعار من الجهاز<input type="file" accept="image/*" style="display:none" onchange="app.logoUpload('${id}', this)"></label>
+                                        ${doc.logoData ? `<button onclick="app.updateDoc('${id}',{logoData:undefined}); app.showDoc('${id}')" style="padding:5px 10px;border-radius:8px;border:1px solid #ccc;background:#fff">↺ الشعار الأصلي</button>` : ''}
+                                    </div>
                                     <div style="display:flex;gap:14px;flex-wrap:wrap">
                                         <label><input type="checkbox" ${doc.showWarranty === false ? '' : 'checked'} onchange="app.updateDoc('${id}',{showWarranty:this.checked}); app.showDoc('${id}')"> سطر الضمان</label>
                                         <label><input type="checkbox" ${doc.showLogo === false ? '' : 'checked'} onchange="app.updateDoc('${id}',{showLogo:this.checked}); app.showDoc('${id}')"> الشعار</label>
-                                        <button style="color:#B91C1C" onclick="app.updateDoc('${id}',{bizName:undefined,bizSub:undefined,terms:undefined,contactLine:undefined,showWarranty:undefined,showLogo:undefined}); app.showDoc('${id}')">↺ رجوع للافتراضي</button>
+                                        <button style="color:#B91C1C" onclick="app.updateDoc('${id}',{bizName:undefined,bizSub:undefined,terms:undefined,contactLine:undefined,showWarranty:undefined,showLogo:undefined,theme:undefined,customColor:undefined,layout:undefined,logoData:undefined}); app.showDoc('${id}')">↺ رجوع للافتراضي</button>
                                     </div>
                                 </div>
                             </details>
