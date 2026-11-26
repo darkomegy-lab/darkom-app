@@ -839,10 +839,10 @@
             },
 
             renderWallsConfigurator(container, ds) {
-                const s = this.wallSel; if (s.width === '10' && s.steel === 'c35') s.steel = 'c40';
+                const s = this.wallSel; if (s.steel === 'c35') s.steel = 'c40'; // 0.35 mm sheet is not offered to clients on the walls page
                 const res = Engine.calcWall(ds, s);
                 const sysLabels = { cladding: 'تجليد وجه واحد', w111: 'قاطع وجهين (W111)', w112: 'قاطع دبل طبقتين (W112)' };
-                const steelLabels = { c35: 'صاج 0.35 مم', c40: 'صاج 0.40 مم', gm50: 'جولدن 0.50 مم', gm60: 'جولدن 0.60 مم' };
+                const steelLabels = { c40: 'صاج 0.40 مم', gm50: 'جولدن 0.50 مم', gm60: 'جولدن 0.60 مم' };
                 const brandLabels = { knauf: 'كناوف', gboard: 'جيبورد', osman: 'عثمان' };
                 const colorLabels = { white: 'أبيض', green: 'أخضر (رطوبة)', red: 'أحمر (حريق)' };
                 const waMsg = `استفسار عن سعر متر الحوائط: ${sysLabels[s.system]} | قطاع ${s.width} سم | صاج ${steelLabels[s.steel]} | ألواح ${brandLabels[s.brand]} ${colorLabels[s.color]}${s.rockwool ? ' + عزل صوف صخري' : ''}`;
@@ -853,7 +853,7 @@
                             <div><div class="text-xs font-extrabold text-primary mb-2">1. نوع الحائط:</div><div class="grid grid-cols-1 sm:grid-cols-3 gap-2">${Object.entries(sysLabels).map(([k,v])=>`<button onclick="app.wallSel.system='${k}'; app.renderPrices(document.getElementById('main-content'))" class="py-2.5 px-3 rounded-xl border-2 text-xs font-bold ${s.system===k?'border-primary bg-primary text-white':'border-gray-200'}">${v}</button>`).join('')}</div></div>
                             <div class="grid sm:grid-cols-2 gap-4">
                                 <div><div class="text-xs font-extrabold text-primary mb-2">2. عرض القطاع:</div><div class="grid grid-cols-3 gap-2">${['5','7','10'].map(w=>`<button onclick="app.wallSel.width='${w}'; app.renderPrices(document.getElementById('main-content'))" class="py-2.5 rounded-xl border-2 text-xs font-bold ${s.width===w?'border-primary bg-primary text-white':'border-gray-200'}">${w} سم</button>`).join('')}</div></div>
-                                <div><div class="text-xs font-extrabold text-primary mb-2">3. نوع الصاج:</div><div class="grid grid-cols-2 gap-2">${Object.entries(steelLabels).map(([k,v])=>{const dis=s.width==='10'&&k==='c35';return `<button ${dis?'disabled':''} onclick="app.wallSel.steel='${k}'; app.renderPrices(document.getElementById('main-content'))" class="py-2 rounded-xl border-2 text-[11px] font-bold ${dis?'opacity-40 bg-gray-100':(s.steel===k?'border-gold bg-gold text-primaryDark':'border-gray-200')}">${v}</button>`;}).join('')}</div></div>
+                                <div><div class="text-xs font-extrabold text-primary mb-2">3. نوع الصاج:</div><div class="grid grid-cols-3 gap-2">${Object.entries(steelLabels).map(([k,v])=>{const dis=s.width==='10'&&k==='c35';return `<button ${dis?'disabled':''} onclick="app.wallSel.steel='${k}'; app.renderPrices(document.getElementById('main-content'))" class="py-2 rounded-xl border-2 text-[11px] font-bold ${dis?'opacity-40 bg-gray-100':(s.steel===k?'border-gold bg-gold text-primaryDark':'border-gray-200')}">${v}</button>`;}).join('')}</div></div>
                             </div>
                             <div class="grid sm:grid-cols-2 gap-4">
                                 <div><div class="text-xs font-extrabold text-primary mb-2">4. الماركة:</div><div class="grid grid-cols-3 gap-2">${Object.entries(brandLabels).map(([k,v])=>`<button onclick="app.wallSel.brand='${k}'; app.renderPrices(document.getElementById('main-content'))" class="py-2 rounded-xl border-2 text-xs font-bold ${s.brand===k?'border-primary bg-primary text-white':'border-gray-200'}">${v}</button>`).join('')}</div></div>
