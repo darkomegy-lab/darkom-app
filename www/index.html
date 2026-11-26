@@ -166,6 +166,7 @@
         const STORAGE_VERSION = 'darkom_v15_srv_2026';
         const APP_VERSION = '1.3.0';
         const DEFAULT_BIZ_NAME = 'داركم للجبس بورد';
+        const DEFAULT_BIZ_SUB = 'DARKOM GYPSUM PRO — أسقف وحوائط وعزل';
         const BUSINESS_PHONE = '01025013991';
         const BUSINESS_PHONE_INTL = '201025013991';
         const MAPS_URL = 'https://maps.google.com/?q=' + encodeURIComponent('الحي السابع، الشيخ زايد، محافظة الجيزة');
@@ -1188,6 +1189,18 @@
                                     <input type="number" id="q-item-qty" value="20" min="1" class="w-24 border-2 rounded-xl px-2 py-2 text-sm font-black text-center">
                                     <button onclick="app.addQuoteItem()" class="flex-1 bg-primary text-gold font-black rounded-xl py-2 text-xs">+ إضافة بند</button>
                                 </div>
+                                <div class="border-2 border-dashed border-gold rounded-xl p-2.5 space-y-2">
+                                    <div class="text-xs font-black text-primaryDark">✍️ بند حر (باسمك وسعرك)</div>
+                                    <input type="text" id="q-cust-name" maxlength="120" placeholder="اسم البند" class="w-full border-2 rounded-xl px-3 py-2 text-xs font-bold">
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <input type="number" id="q-cust-qty" value="1" min="0" step="any" placeholder="الكمية" class="border-2 rounded-xl px-2 py-2 text-xs font-black text-center">
+                                        <input type="text" id="q-cust-unit" value="بند" maxlength="12" list="q-cust-units" placeholder="الوحدة" class="border-2 rounded-xl px-2 py-2 text-xs font-black text-center">
+                                        <input type="number" id="q-cust-price" min="0" step="any" placeholder="سعر الوحدة (ج)" class="border-2 rounded-xl px-2 py-2 text-xs font-black text-center">
+                                    </div>
+                                    <datalist id="q-cust-units"><option value="بند"><option value="م²"><option value="م.ط"><option value="قطعة"><option value="متر"><option value="يوم"><option value="رحلة"><option value="مقطوعية"></datalist>
+                                    ${store.isAdmin ? `<input type="number" id="q-cust-cost" min="0" step="any" placeholder="تكلفة الوحدة (اختياري، للإدارة فقط)" class="w-full border-2 rounded-xl px-3 py-2 text-xs font-bold">` : ''}
+                                    <button onclick="app.addCustomItem()" class="w-full bg-gold text-primaryDark font-black rounded-xl py-2 text-xs">+ إضافة البند الحر</button>
+                                </div>
                                 <div class="border-t pt-3 space-y-2">
                                     <div class="text-xs font-black text-primaryDark">📄 بيانات المستند (عرض سعر / فاتورة)</div>
                                     <div class="grid grid-cols-2 gap-2">
@@ -1293,6 +1306,16 @@
                 this.adminNavigate('worker_quotes');
             },
 
+            addCustomItem() {
+                const g = id => { const e = document.getElementById(id); return e ? e.value : ''; };
+                const name = g('q-cust-name').trim(), unit = g('q-cust-unit').trim() || 'بند';
+                const qty = Number(g('q-cust-qty')), price = Number(g('q-cust-price')), cost = Number(g('q-cust-cost')) || 0;
+                if (!name) { this.toast('اكتب اسم البند'); return; }
+                if (!(qty > 0)) { this.toast('الكمية لازم تكون أكبر من صفر'); return; }
+                if (!(price >= 0) || g('q-cust-price') === '') { this.toast('اكتب سعر الوحدة'); return; }
+                this.quoteDraft.items.push({ label: name, unit, qty, unitCost: cost, unitSell: price, custom: true });
+                this.adminNavigate('worker_quotes');
+            },
             addQuoteItem() {
                 const ds = store.getDataset(true);
                 const val = document.getElementById('q-item-type').value;
@@ -1449,9 +1472,9 @@
                 return `<div dir="rtl" style="width:794px;min-height:1123px;box-sizing:border-box;background:#fff;color:#1F2937;font-family:'Cairo',Tahoma,Arial,sans-serif;font-size:14px;padding:34px 38px;position:relative">
                     <div style="background:#E6EBD6;border-radius:16px;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;color:#2B3615">
                         <div style="display:flex;align-items:center;gap:14px">
-                            <svg viewBox="0 0 100 100" width="66" height="66" style="border-radius:14px;flex-shrink:0"><rect width="100" height="100" rx="20" fill="#52652A"/><g transform="translate(12 12) scale(.76)"><path d="M10,40 L50,15 L90,40 L90,85 L10,85 Z" fill="#F0CE41"/><rect x="30" y="50" width="18" height="18" fill="#52652A"/><rect x="52" y="50" width="18" height="18" fill="#F0CE41" stroke="#52652A" stroke-width="2"/><rect x="30" y="70" width="18" height="15" fill="#F0CE41" stroke="#52652A" stroke-width="2"/><rect x="52" y="70" width="18" height="15" fill="#52652A"/></g></svg>
+                            ${doc.showLogo === false ? '' : `<svg viewBox="0 0 100 100" width="66" height="66" style="border-radius:14px;flex-shrink:0"><rect width="100" height="100" rx="20" fill="#52652A"/><g transform="translate(12 12) scale(.76)"><path d="M10,40 L50,15 L90,40 L90,85 L10,85 Z" fill="#F0CE41"/><rect x="30" y="50" width="18" height="18" fill="#52652A"/><rect x="52" y="50" width="18" height="18" fill="#F0CE41" stroke="#52652A" stroke-width="2"/><rect x="30" y="70" width="18" height="15" fill="#F0CE41" stroke="#52652A" stroke-width="2"/><rect x="52" y="70" width="18" height="15" fill="#52652A"/></g></svg>`}
                             <div><div style="font-size:26px;font-weight:900;color:#52652A;line-height:1.5;margin-bottom:8px">${this.esc(doc.bizName || DEFAULT_BIZ_NAME)}</div>
-                            <div style="font-size:12px;line-height:1.7;color:#68754A">DARKOM GYPSUM PRO — أسقف وحوائط وعزل</div></div>
+                            <div style="font-size:12px;line-height:1.7;color:#68754A">${this.esc(doc.bizSub != null ? doc.bizSub : DEFAULT_BIZ_SUB)}</div></div>
                         </div>
                         <div style="text-align:left;line-height:1.8">
                             <div style="font-size:24px;font-weight:900;color:#52652A">${title}</div>
@@ -1482,9 +1505,12 @@
                     </div>
                     ${doc.notes ? `<div style="margin-top:18px;padding:12px 16px;background:#FFFBEB;border:1px solid #F0CE41;border-radius:10px;line-height:1.9"><strong>ملاحظات:</strong> ${this.esc(doc.notes).replace(/\n/g, '<br>')}</div>` : ''}
                     <div style="margin-top:26px;border-top:2px solid #2B3615;padding-top:12px;font-size:12px;color:#4B5563;line-height:2">
-                        ${isInv ? 'شكراً لتعاملكم مع ' + this.esc(doc.bizName || 'داركم') + '.' : 'الأسعار توريد وتركيب ومصنعية، غير شاملة الدهانات النهائية. العرض صالح 7 أيام من تاريخه.'}<br>
-                        ضمان تنفيذ ${WARRANTY_LABEL} ضد عيوب التركيب (على التركيب فقط، ولا يشمل تلف الخامات من تسريب مياه أو سوء استخدام).<br>
-                        للتأكيد أو الاستفسار: ${BUSINESS_PHONE} (واتساب / اتصال)${doc.showAddress === false ? '' : ' — الحي السابع، الشيخ زايد، محافظة الجيزة'} — ${WORKING_HOURS}.
+                        ${(() => {
+                            const terms = doc.terms != null ? this.esc(doc.terms) : (isInv ? 'شكراً لتعاملكم مع ' + this.esc(doc.bizName || 'داركم') + '.' : 'الأسعار توريد وتركيب ومصنعية، غير شاملة الدهانات النهائية. العرض صالح 7 أيام من تاريخه.');
+                            const warr = doc.showWarranty === false ? '' : `ضمان تنفيذ ${WARRANTY_LABEL} ضد عيوب التركيب (على التركيب فقط، ولا يشمل تلف الخامات من تسريب مياه أو سوء استخدام).`;
+                            const contact = doc.contactLine != null ? this.esc(doc.contactLine) : `للتأكيد أو الاستفسار: ${BUSINESS_PHONE} (واتساب / اتصال)${doc.showAddress === false ? '' : ' — الحي السابع، الشيخ زايد، محافظة الجيزة'} — ${WORKING_HOURS}.`;
+                            return [terms, warr, contact].filter(x => x).join('<br>');
+                        })()}
                     </div>
                     ${this.verifyBlockHtml(doc)}
                 </div>`;
@@ -1495,7 +1521,7 @@
                 try { const qr = qrcode(0, 'M'); qr.addData(this.verifyUrl(doc)); qr.make(); svg = qr.createSvgTag({ cellSize: 3, margin: 0, scalable: true }); } catch (e) { return ''; }
                 return `<div style="margin-top:12px;display:flex;align-items:center;gap:12px;border:1px dashed #9CA3AF;border-radius:10px;padding:8px 12px">
                     <div style="width:64px;height:64px;flex-shrink:0">${svg.replace('<svg ', '<svg width="64" height="64" ')}</div>
-                    <div style="font-size:12px;line-height:1.9;color:#374151"><strong style="color:#52652A">تحقق من صحة المستند</strong><br>امسح الكود للتأكد إن المستند صادر فعلاً من داركم وإن الإجمالي مطابق.<br><span style="direction:ltr;display:inline-block;font-size:11px">${this.esc(this.verifyUrl(doc))}</span><br>كود التحقق: <strong style="direction:ltr;display:inline-block;letter-spacing:1px">${doc.verify.code}</strong></div></div>`;
+                    <div style="font-size:12px;line-height:1.9;color:#374151"><strong style="color:#52652A">تحقق من صحة المستند</strong><br>امسح الكود للتأكد من صحة المستند وإن الإجمالي مطابق.<br><span style="direction:ltr;display:inline-block;font-size:11px">${this.esc(this.verifyUrl(doc))}</span><br>كود التحقق: <strong style="direction:ltr;display:inline-block;letter-spacing:1px">${doc.verify.code}</strong></div></div>`;
             },
             showDoc(id) {
                 const doc = this.getDoc(id); if (!doc) return;
@@ -1508,7 +1534,20 @@
                     <div style="background:#fff;border-radius:14px;padding:10px;margin-bottom:10px;font-family:Cairo,sans-serif">
                         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;font-weight:700;margin-bottom:8px">
                             <span style="font-weight:900;color:#14351D">${isInv ? '🧾 فاتورة' : '📄 عرض سعر'} ${doc.no}</span>
-                            <label style="display:flex;align-items:center;gap:4px">اسم الجهة <input type="text" maxlength="60" value="${this.esc(doc.bizName || DEFAULT_BIZ_NAME)}" style="width:150px;border:1px solid #ccc;border-radius:8px;padding:3px 6px" onchange="app.updateDoc('${id}',{bizName:(this.value.trim()||DEFAULT_BIZ_NAME)}); app.showDoc('${id}')"></label>
+                            <details style="flex-basis:100%;background:#F4F7F5;border-radius:10px;padding:6px 10px" ${this._editOpen ? 'open' : ''} ontoggle="app._editOpen=this.open">
+                                <summary style="cursor:pointer;font-weight:900;color:#52652A">✏️ تعديل بيانات الجهة والنصوص (للمستند ده فقط)</summary>
+                                <div style="display:grid;gap:6px;margin-top:8px;font-weight:700">
+                                    <label>اسم الجهة <input type="text" maxlength="60" value="${this.esc(doc.bizName || DEFAULT_BIZ_NAME)}" style="width:100%;border:1px solid #ccc;border-radius:8px;padding:4px 6px" onchange="app.updateDoc('${id}',{bizName:(this.value.trim()||DEFAULT_BIZ_NAME)}); app.showDoc('${id}')"></label>
+                                    <label>السطر تحت الاسم (فاضي = يتشال) <input type="text" maxlength="90" value="${this.esc(doc.bizSub != null ? doc.bizSub : DEFAULT_BIZ_SUB)}" style="width:100%;border:1px solid #ccc;border-radius:8px;padding:4px 6px" onchange="app.updateDoc('${id}',{bizSub:this.value}); app.showDoc('${id}')"></label>
+                                    <label>سطر الشروط الأول (فاضي = يتشال) <textarea rows="2" maxlength="300" style="width:100%;border:1px solid #ccc;border-radius:8px;padding:4px 6px" onchange="app.updateDoc('${id}',{terms:this.value}); app.showDoc('${id}')">${this.esc(doc.terms != null ? doc.terms : (isInv ? 'شكراً لتعاملكم مع ' + (doc.bizName || 'داركم') + '.' : 'الأسعار توريد وتركيب ومصنعية، غير شاملة الدهانات النهائية. العرض صالح 7 أيام من تاريخه.'))}</textarea></label>
+                                    <label>سطر التواصل والعنوان (فاضي = يتشال) <textarea rows="2" maxlength="300" style="width:100%;border:1px solid #ccc;border-radius:8px;padding:4px 6px" onchange="app.updateDoc('${id}',{contactLine:this.value}); app.showDoc('${id}')">${this.esc(doc.contactLine != null ? doc.contactLine : 'للتأكيد أو الاستفسار: ' + BUSINESS_PHONE + ' (واتساب / اتصال)' + (doc.showAddress === false ? '' : ' — الحي السابع، الشيخ زايد، محافظة الجيزة') + ' — ' + WORKING_HOURS + '.')}</textarea></label>
+                                    <div style="display:flex;gap:14px;flex-wrap:wrap">
+                                        <label><input type="checkbox" ${doc.showWarranty === false ? '' : 'checked'} onchange="app.updateDoc('${id}',{showWarranty:this.checked}); app.showDoc('${id}')"> سطر الضمان</label>
+                                        <label><input type="checkbox" ${doc.showLogo === false ? '' : 'checked'} onchange="app.updateDoc('${id}',{showLogo:this.checked}); app.showDoc('${id}')"> الشعار</label>
+                                        <button style="color:#B91C1C" onclick="app.updateDoc('${id}',{bizName:undefined,bizSub:undefined,terms:undefined,contactLine:undefined,showWarranty:undefined,showLogo:undefined}); app.showDoc('${id}')">↺ رجوع للافتراضي</button>
+                                    </div>
+                                </div>
+                            </details>
                             <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" ${doc.showAddress === false ? '' : 'checked'} onchange="app.updateDoc('${id}',{showAddress:this.checked}); app.showDoc('${id}')"> العنوان</label>
                             <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" ${doc.showQr === false ? '' : 'checked'} onchange="app.updateDoc('${id}',{showQr:this.checked}); app.showDoc('${id}')"> QR التحقق</label>
                             <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" ${doc.vat ? 'checked' : ''} onchange="app.updateDoc('${id}',{vat:this.checked}); app.showDoc('${id}')"> ضريبة قيمة مضافة 14%</label>
