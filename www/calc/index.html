@@ -759,22 +759,22 @@
                                 <div class="bg-gray-50 rounded-xl p-3.5 mb-4 border border-gray-100 space-y-2.5">
                                     <div class="flex justify-between items-center border-b border-gray-200 pb-2">
                                         <div>
-                                            <div class="text-xs font-black text-gray-800">سعر المتر المسطح</div><div class="text-[11px] font-bold text-primary">السعر للمتر المربع الواحد (م²)</div>
+                                            <div class="text-xs font-bold text-gray-700">سعر المتر المسطح</div>
                                             ${flatColorDelta > 0 ? `<div class="text-[10px] text-green-700 font-bold">يشمل فرق اللون (+${flatColorDelta} ج/م²)</div>` : ''}
                                             ${(addons.shadow || addons.shadowLed) ? `<div class="text-[10px] text-amber-700 font-bold">شامل شادو محيطي (${shRatio} م.ط/م²)</div>` : ''}
                                         </div>
                                         <div class="text-left">
-                                            ${res.missing ? `<span class="text-sm font-bold text-goldDark">اطلب عرض سعر</span>` : `<span class="text-2xl font-black text-primary">${res.flatPrice}</span> <span class="text-xs font-black text-primary">ج.م / م²</span>`}
+                                            ${res.missing ? `<span class="text-sm font-bold text-goldDark">اطلب عرض سعر</span>` : `<span class="text-2xl font-black text-primary">${res.flatPrice}</span> <span class="text-xs font-bold text-gray-500">ج.م / م²</span>`}
                                         </div>
                                     </div>
                                     <div class="flex justify-between items-center">
                                         <div>
-                                            <div class="text-xs font-black text-gray-800">سعر المتر الطولي (بيت النور)</div><div class="text-[11px] font-bold text-primary">السعر للمتر الطولي الواحد (م.ط)</div>
+                                            <div class="text-xs font-bold text-gray-700">سعر المتر الطولي (بيت النور)</div>
                                             ${coveColorDelta > 0 ? `<div class="text-[10px] text-green-700 font-bold">يشمل فرق اللون (+${coveColorDelta} ج/م.ط)</div>` : ''}
                                             ${(addons.shadow || addons.shadowLed || addons.corner || addons.endBead) ? `<div class="text-[10px] text-primary font-bold">شامل الإضافات المفعّلة</div>` : ''}
                                         </div>
                                         <div class="text-left">
-                                            ${res.missing ? `<span class="text-xs text-gray-400">—</span>` : `<span class="text-xl font-black text-primaryDark">${res.covePrice}</span> <span class="text-xs font-black text-primary">ج.م / م.ط</span>`}
+                                            ${res.missing ? `<span class="text-xs text-gray-400">—</span>` : `<span class="text-xl font-black text-primaryDark">${res.covePrice}</span> <span class="text-xs font-bold text-gray-500">ج.م / م.ط</span>`}
                                         </div>
                                     </div>
                                 </div>
