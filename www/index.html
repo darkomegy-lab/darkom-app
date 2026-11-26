@@ -155,6 +155,18 @@
         </section>
     </main>
 
+    <!-- Always-visible contact buttons -->
+    <div id="float-contact" class="fixed left-2 bottom-20 md:bottom-6 md:left-6 z-50 flex flex-col gap-2">
+        <a href="https://wa.me/201025013991" target="_blank" rel="noopener" aria-label="واتساب" class="flex items-center gap-2 bg-[#25D366] text-white font-black text-sm rounded-full shadow-lg p-3 md:pl-4 md:pr-3 hover:brightness-95 transition">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2a10 10 0 00-8.6 15l-1.4 5 5.1-1.3A10 10 0 1012 2zm5.2 14.2c-.2.6-1.3 1.2-1.8 1.2-.5.1-1 .2-3.3-.7-2.8-1.1-4.6-4-4.7-4.2-.1-.2-1.1-1.5-1.1-2.8s.7-2 1-2.3c.2-.3.5-.3.7-.3h.5c.2 0 .4 0 .6.5l.8 2c.1.2.1.3 0 .5l-.3.5-.4.4c-.1.2-.3.3-.1.6.2.3.8 1.3 1.7 2.1 1.1 1 2.1 1.3 2.4 1.4.3.1.4.1.6-.1l.8-1c.2-.3.4-.2.6-.1l1.9.9c.3.1.5.2.5.3.1.1.1.6-.1 1.2z"/></svg>
+            <span class="hidden md:inline">واتساب</span>
+        </a>
+        <a href="tel:+201025013991" aria-label="اتصل بنا" class="flex items-center gap-2 bg-primary text-white font-black text-sm rounded-full shadow-lg p-3 md:pl-4 md:pr-3 hover:bg-primaryDark transition">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"/></svg>
+            <span class="hidden md:inline">اتصل</span>
+        </a>
+    </div>
+
     <!-- Mobile Public Bottom Navigation -->
     <nav id="public-nav" class="fixed bottom-0 w-full bg-white border-t border-gray-200 shadow-[0_-4px_10px_rgba(0,0,0,0.08)] z-40 md:hidden safe-area-bottom">
         <div class="grid grid-cols-5 items-end h-16 pb-1">
@@ -193,14 +205,14 @@
         const STORAGE_VERSION = 'darkom_v15_srv_2026';
         const APP_VERSION = '1.3.0';
         const DEFAULT_BIZ_NAME = 'داركم للجبس بورد';
-        const DOC_BASE_THEME = { primary: '#52652A', light: '#E6EBD6', thead: '#D3DDB6', accent: '#F0CE41', dark: '#2B3615', sub: '#68754A' };
+        const DOC_BASE_THEME = { primary: '#52652A', light: '#E6EBD6', thead: '#D3DDB6', accent: '#E8DFBC', dark: '#2B3615', sub: '#68754A' };
         const DOC_THEMES = [
             { name: 'زيتوني', ...DOC_BASE_THEME },
-            { name: 'أزرق ملكي', primary: '#1E3A8A', light: '#DBE5F7', thead: '#C3D3F0', accent: '#F59E0B', dark: '#172554', sub: '#475E9C' },
-            { name: 'أخضر زمردي', primary: '#0F766E', light: '#D5EFEB', thead: '#BFE3DE', accent: '#F0B429', dark: '#134E4A', sub: '#3F8A82' },
-            { name: 'عنابي', primary: '#7F1D1D', light: '#F5DEDE', thead: '#EBC5C5', accent: '#D4A017', dark: '#450A0A', sub: '#A04A4A' },
-            { name: 'فحمي', primary: '#1F2937', light: '#E5E7EB', thead: '#D1D5DB', accent: '#F0CE41', dark: '#111827', sub: '#6B7280' },
-            { name: 'ذهبي بني', primary: '#92400E', light: '#FBEBD2', thead: '#F3D9AE', accent: '#CA8A04', dark: '#451A03', sub: '#A16207' }
+            { name: 'رصاصي', primary: '#66727F', light: '#ECEFF2', thead: '#DADFE5', accent: '#E9E2C4', dark: '#38424D', sub: '#8794A1' },
+            { name: 'فحمي فاتح', primary: '#5A5D63', light: '#EDEDEE', thead: '#DCDCDE', accent: '#E6DFC2', dark: '#2F3135', sub: '#85888E' },
+            { name: 'زيتوني رمادي', primary: '#757B58', light: '#EEF0E6', thead: '#DDE1CD', accent: '#E8E1BC', dark: '#3E4330', sub: '#8D9376' },
+            { name: 'أخضر رمادي', primary: '#6E8F84', light: '#E8F0ED', thead: '#D3E2DC', accent: '#EAE3BE', dark: '#34524A', sub: '#86A79B' },
+            { name: 'رملي', primary: '#9C8B73', light: '#F3EFE8', thead: '#E5DDCF', accent: '#E8DFBC', dark: '#574B3A', sub: '#A89A84' }
         ];
         const DEFAULT_BIZ_SUB = 'DARKOM GYPSUM PRO — أسقف وحوائط وعزل';
         const BUSINESS_PHONE = '01025013991';
@@ -581,6 +593,7 @@
             },
             updateNavVisibility() {
                 document.getElementById('public-nav').classList.toggle('hidden', store.isAdmin);
+                const fc = document.getElementById('float-contact'); if (fc) fc.style.display = store.isAdmin ? 'none' : '';
                 document.getElementById('desktop-nav').style.display = store.isAdmin ? 'none' : '';
                 document.getElementById('admin-nav').classList.toggle('hidden', !store.isAdmin);
                 document.getElementById('admin-badge').classList.toggle('hidden', !store.isAdmin);
@@ -670,9 +683,37 @@
 
                     <div id="packages-grid"></div>
 
-                    <div class="mt-6 mb-20 md:mb-4">
+                    <div class="mt-6 md:mb-4">
                         <button onclick="app.navigate('prices')" class="w-full bg-gold text-primaryDark px-5 py-3.5 rounded-xl font-extrabold text-sm shadow hover:bg-goldDark transition">أسعار الحوائط والسيمنت و60×60 ←</button>
                     </div>
+
+                    <section class="mt-8">
+                        <div class="flex items-center justify-between mb-3">
+                            <h2 class="text-xl md:text-2xl font-black text-primary">من أعمالنا</h2>
+                            <button onclick="app.navigate('portfolio')" class="text-xs md:text-sm font-bold text-primary underline underline-offset-4">كل الأعمال ←</button>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-4">
+                            ${[['work1','أسقف ريسبشن بإضاءة خطية وشادو جاب'],['work2','بيت نور وشادو ليد محيطي'],['work3','تجاليد حوائط وتلفزيونات'],['work4','أسقف مطابخ أمريكاني'],['work5','سقف متعدد المستويات'],['work6','سبوتات وخطوط ليد']].map(([f,alt]) => `<div class="rounded-2xl overflow-hidden bg-gray-100 aspect-[4/3] shadow-sm"><img src="portfolio/${f}.jpg" alt="${alt}" loading="lazy" decoding="async" class="w-full h-full object-cover"></div>`).join('')}
+                        </div>
+                    </section>
+
+                    <section class="mt-8 bg-white border border-gray-100 rounded-2xl shadow-sm p-5 md:p-6 flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                        <div>
+                            <h2 class="text-lg md:text-xl font-black text-primary mb-1">احسب سعر سقف شقتك</h2>
+                            <p class="text-xs md:text-sm text-gray-600">اكتب المساحة واختار المستوى وشوف التكلفة التقريبية في ثواني.</p>
+                        </div>
+                        <button onclick="app.navigate('calc')" class="bg-primary text-white font-black text-sm px-6 py-3 rounded-xl hover:bg-primaryDark transition whitespace-nowrap">احسب سعرك الآن</button>
+                    </section>
+
+                    <section class="mt-8 mb-24 md:mb-8">
+                        <div class="flex items-center justify-between mb-3">
+                            <h2 class="text-xl md:text-2xl font-black text-primary">أسئلة شائعة</h2>
+                            <button onclick="app.navigate('faq')" class="text-xs md:text-sm font-bold text-primary underline underline-offset-4">كل الأسئلة ←</button>
+                        </div>
+                        <div class="space-y-2">
+                            ${this.faqList().slice(0, 4).map(([q, a]) => `<details class="bg-white rounded-xl border border-gray-100 shadow-sm group"><summary class="cursor-pointer p-3.5 font-black text-primaryDark text-sm flex justify-between items-center gap-2 list-none"><span>${q}</span><span class="text-goldDark text-lg transition group-open:rotate-45">+</span></summary><div class="px-4 pb-3.5 text-sm text-gray-600 leading-relaxed border-t border-gray-100 pt-3">${a}</div></details>`).join('')}
+                        </div>
+                    </section>
                 `;
                 this.renderPackagesCards(ds);
             },
@@ -1546,11 +1587,9 @@
                             .replace(`padding:12px 14px;background:${th.accent};color:${th.dark}`, `padding:12px 14px;background:${th.light};color:${th.dark}`)
                             .replace('background:#F4F7F5;border-radius:12px', 'background:#fff;border-radius:0;border-top:1px solid #E5E7EB;border-bottom:1px solid #E5E7EB');
                     } else if (lay === 'C') {
-                        hd = hd.replace(`background:${th.light};border-radius:16px;padding:20px 24px`, `background:${th.primary};border-radius:0 0 22px 22px;padding:26px 28px;margin:-34px -38px 0`)
-                            .split(`color:${th.dark}`).join('color:#fff').split(`color:${th.primary}`).join('color:#fff').split(`color:${th.sub}`).join('color:#E5E7EB')
-                            .replace(`rx="20" fill="${th.primary}"`, 'rx="20" fill="#fff"');
+                        hd = hd.replace(`background:${th.light};border-radius:16px;padding:20px 24px`, `background:${th.thead};border-radius:0 0 26px 26px;padding:26px 28px;margin:-34px -38px 0`);
                         rest = rest.replace(bar, `height:6px;background:${th.accent};border-radius:3px;margin:14px 0 18px;width:40%`)
-                            .replace(`background:${th.thead};color:${th.dark}`, `background:${th.dark};color:#fff`);
+                            .replace(`background:${th.thead};color:${th.dark}`, `background:${th.thead};color:${th.dark};border-bottom:3px solid ${th.primary}`);
                     }
                     h = hd + rest;
                 }
@@ -1598,7 +1637,7 @@
                             ${isInv ? '' : `<div style="font-size:12px;color:#68754A">صالح حتى: ${this.docDateStr(validUntil)}</div>`}
                         </div>
                     </div>
-                    <div style="height:6px;background:#F0CE41;border-radius:3px;margin:12px 0 18px"></div>
+                    <div style="height:6px;background:#E8DFBC;border-radius:3px;margin:12px 0 18px"></div>
                     <div style="background:#F4F7F5;border-radius:12px;padding:14px 18px;display:grid;grid-template-columns:1fr 1fr;gap:6px 24px;line-height:1.8">
                         <div style="grid-column:1/3;font-weight:900;color:#52652A;font-size:15px">بيانات العميل</div>
                         ${clientRow('العميل', doc.client || 'الكريم')}${clientRow('الموبايل', doc.phone)}${clientRow('الإيميل', doc.email)}${clientRow('العنوان', doc.address)}${clientRow('موقع المشروع', doc.project)}
@@ -1613,12 +1652,12 @@
                             ${line('المجموع', this.fmt(t.sub) + ' ج')}
                             ${t.disc ? line('الخصم', '- ' + this.fmt(t.disc) + ' ج') : ''}
                             ${doc.vat ? line('ضريبة القيمة المضافة 14%', this.fmt(t.vat) + ' ج') : ''}
-                            <div style="display:flex;justify-content:space-between;padding:12px 14px;background:#F0CE41;color:#2B3615;font-weight:900;font-size:18px"><span>الإجمالي</span><span>${this.fmt(t.total)} ج.م</span></div>
+                            <div style="display:flex;justify-content:space-between;padding:12px 14px;background:#E8DFBC;color:#2B3615;font-weight:900;font-size:18px"><span>الإجمالي</span><span>${this.fmt(t.total)} ج.م</span></div>
                             ${t.dep ? line(isInv ? 'المدفوع حتى الآن' : 'العربون المدفوع', this.fmt(t.dep) + ' ج') : ''}
                             ${t.dep ? `<div style="display:flex;justify-content:space-between;padding:10px 14px;font-weight:900;color:#2B3615"><span>المتبقي</span><span>${this.fmt(t.balance)} ج</span></div>` : ''}
                         </div>
                     </div>
-                    ${doc.notes ? `<div style="margin-top:18px;padding:12px 16px;background:#FFFBEB;border:1px solid #F0CE41;border-radius:10px;line-height:1.9"><strong>ملاحظات:</strong> ${this.esc(doc.notes).replace(/\n/g, '<br>')}</div>` : ''}
+                    ${doc.notes ? `<div style="margin-top:18px;padding:12px 16px;background:#FFFBEB;border:1px solid #E8DFBC;border-radius:10px;line-height:1.9"><strong>ملاحظات:</strong> ${this.esc(doc.notes).replace(/\n/g, '<br>')}</div>` : ''}
                     <div style="margin-top:26px;border-top:2px solid #2B3615;padding-top:12px;font-size:12px;color:#4B5563;line-height:2">
                         ${(() => {
                             const terms = doc.terms != null ? this.esc(doc.terms) : (isInv ? 'شكراً لتعاملكم مع ' + this.esc(doc.bizName || 'داركم') + '.' : 'الأسعار توريد وتركيب ومصنعية، غير شاملة الدهانات النهائية. العرض صالح 7 أيام من تاريخه.');
@@ -1906,8 +1945,8 @@
             // =================================================================
             // PUBLIC VIEW: الأسئلة الشائعة
             // =================================================================
-            renderFaq(container) {
-                const faqs = [
+            faqList() {
+                return [
                     ['هل الأسعار المعروضة شاملة؟', 'أيوه، كل أسعار التطبيق توريد + تركيب + مصنعية بالمتر. غير شاملة الدهانات النهائية (النقاشة) فقط.'],
                     ['الفريق بيخلص شقة في قد إيه؟', 'الشقة المتوسطة (100-150 م²) بتاخد عادة من 3 لـ 7 أيام عمل حسب التصميم وعدد البنود.'],
                     ['إيه الفرق بين اللوح الأبيض والأخضر والأحمر؟', 'الأبيض للأماكن الجافة (غرف وريسبشن)، الأخضر مقاوم للرطوبة (حمامات ومطابخ)، الأحمر مقاوم للحريق (مطابخ ومداخل وأماكن تجارية).'],
@@ -1917,6 +1956,9 @@
                     ['بتشتغلوا في أنهي مناطق؟', SERVICE_AREAS.join('، ') + '.'],
                     ['إزاي أطلب؟', 'واتساب أو مكالمة على ' + BUSINESS_PHONE + ' — بنرد بسرعة ونحدد معاد معاينة يناسبك.']
                 ];
+            },
+            renderFaq(container) {
+                const faqs = this.faqList();
                 container.innerHTML = `
                     <div class="max-w-2xl mx-auto">
                         <div class="text-center mb-6">
