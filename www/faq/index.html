@@ -208,6 +208,12 @@
         const SOCIAL_LINKS = { facebook: 'https://www.facebook.com/share/1MJ87JwGCr/', instagram: 'https://www.instagram.com/darkomegy', tiktok: '' }; // تُملأ عند توفر روابط صفحات النشاط
                 const PRICING_API = 'https://darkom-pricing.darkomegy.workers.dev';
         let PRICE_STATE = { catalog: null, costs: null, version: 0 };
+        // Rounding for quote/invoice lines and totals: nearest step (server setting round_to / round_mode)
+        function roundNear(v) {
+            const c = PRICE_STATE.catalog || {}, step = Number(c.round_to) || 5;
+            return (c.round_mode === 'up' ? Math.ceil(v / step) : Math.round(v / step)) * step;
+        }
+        function lineTotal(it) { return roundNear(it.unitSell * it.qty); }
         const CATALOG_CACHE_KEY = 'darkom_catalog_v1';
 
         // الأسعار تأتي من السيرفر (أسعار البيع فقط). نسخة مخزنة + نسخة مدمجة للعمل بدون إنترنت.
@@ -471,7 +477,9 @@
         const _cost = () => PRICE_STATE.costs;
         const Engine = {
             roundUp(val, step) {
-                return (!step || step <= 1) ? Math.ceil(val) : Math.ceil(val / step) * step;
+                const up = (PRICE_STATE.catalog || {}).round_mode === 'up';
+                if (!step || step <= 1) return up ? Math.ceil(val) : Math.round(val);
+                return (up ? Math.ceil(val / step) : Math.round(val / step)) * step;
             },
             addonUnit(ds, kind) {
                 const a = ((PRICE_STATE.catalog || {}).addons || {})[kind];
@@ -1217,7 +1225,7 @@
             renderIntegratedAdminQuotes(container) {
                 const ds = store.getDataset(true);
                 const q = this.quoteDraft;
-                const totals = q.items.reduce((acc, it) => { acc.cost += it.unitCost * it.qty; acc.sell += it.unitSell * it.qty; return acc; }, { cost: 0, sell: 0 });
+                const totals = q.items.reduce((acc, it) => { acc.cost += it.unitCost * it.qty; acc.sell += lineTotal(it); return acc; }, { cost: 0, sell: 0 });
                 const profit = totals.sell - totals.cost;
 
                 container.innerHTML = `
@@ -1337,7 +1345,7 @@
                                         <tr><th class="p-2">البند</th><th class="p-2 text-center">الكمية</th><th class="p-2 text-center">سعر الوحدة</th><th class="p-2 text-center">الإجمالي</th><th class="p-2 no-print"></th></tr>
                                     </thead>
                                     <tbody class="divide-y">
-                                        ${q.items.map((it, idx)=>`<tr><td class="p-2 font-bold">${it.label}</td><td class="p-2 text-center">${it.qty} ${it.unit}</td><td class="p-2 text-center">${it.unitSell} ج / ${it.unit}</td><td class="p-2 text-center font-black text-primary">${Math.round(it.unitSell*it.qty).toLocaleString()} ج</td><td class="p-2 no-print"><button onclick="app.quoteDraft.items.splice(${idx},1); app.adminNavigate('worker_quotes')" class="text-red-500 font-bold">✕</button></td></tr>`).join('')}
+                                        ${q.items.map((it, idx)=>`<tr><td class="p-2 font-bold">${it.label}</td><td class="p-2 text-center">${it.qty} ${it.unit}</td><td class="p-2 text-center">${it.unitSell} ج / ${it.unit}</td><td class="p-2 text-center font-black text-primary">${lineTotal(it).toLocaleString()} ج</td><td class="p-2 no-print"><button onclick="app.quoteDraft.items.splice(${idx},1); app.adminNavigate('worker_quotes')" class="text-red-500 font-bold">✕</button></td></tr>`).join('')}
                                     </tbody>
                                 </table>
                                 <div class="bg-primaryDark text-white rounded-xl p-4 flex justify-between items-center">
@@ -1447,8 +1455,8 @@
 
             sendQuoteWhatsApp() {
                 const q = this.quoteDraft;
-                const total = q.items.reduce((s,it)=>s+it.unitSell*it.qty, 0);
-                const lines = q.items.map((it,i)=>`${i+1}. ${it.label}: ${it.qty} ${it.unit} × ${it.unitSell} ج = ${Math.round(it.qty*it.unitSell).toLocaleString()} ج`).join('\n');
+                const total = q.items.reduce((s,it)=>s+lineTotal(it), 0);
+                const lines = q.items.map((it,i)=>`${i+1}. ${it.label}: ${it.qty} ${it.unit} × ${it.unitSell} ج = ${lineTotal(it).toLocaleString()} ج`).join('\n');
                 const text = `عرض سعر من داركم للجبس بورد\nالعميل: ${q.client || 'الكريم'}\n-----------------\n${lines}\n-----------------\nالإجمالي: ${Math.round(total).toLocaleString()} ج.م\nللتأكيد: 01025013991`;
                 const phone = q.phone ? q.phone.replace(/\D/g,'').replace(/^0/, '20') : '201025013991';
                 window.open(`https://wa.me/${phone}?text=${encodeURIComponent(text)}`, '_blank');
@@ -1465,11 +1473,11 @@
             saveDocs(d) { localStorage.setItem(this.docsKey, JSON.stringify(d)); },
             fmt(n) { return Math.round(Number(n) || 0).toLocaleString('en-US'); },
             docTotals(doc) {
-                const sub = doc.items.reduce((s, it) => s + Math.round(it.unitSell * it.qty), 0);
+                const sub = doc.items.reduce((s, it) => s + lineTotal(it), 0);
                 const disc = Math.min(Math.max(Number(doc.discount) || 0, 0), sub);
                 const taxable = sub - disc;
-                const vat = doc.vat ? Math.round(taxable * 0.14) : 0;
-                const total = taxable + vat;
+                const vat = doc.vat ? roundNear(taxable * 0.14) : 0;
+                const total = roundNear(taxable + vat);
                 const dep = (doc.type === 'invoice' && doc.paid) ? total : Math.min(Math.max(Number(doc.deposit) || 0, 0), total);
                 return { sub, disc, vat, total, dep, balance: total - dep };
             },
@@ -1607,7 +1615,7 @@
                     <td style="padding:9px 8px;text-align:right;border-bottom:1px solid #E5E7EB;font-weight:700">${this.esc(it.label)}</td>
                     <td style="padding:9px 8px;text-align:center;border-bottom:1px solid #E5E7EB;white-space:nowrap">${Number(it.qty)} ${this.esc(it.unit)}</td>
                     <td style="padding:9px 8px;text-align:center;border-bottom:1px solid #E5E7EB;white-space:nowrap">${this.fmt(it.unitSell)} <span style="font-size:10px;color:#6B7280">/ ${this.esc(it.unit)}</span></td>
-                    <td style="padding:9px 8px;text-align:center;border-bottom:1px solid #E5E7EB;font-weight:900;color:#2B3615;white-space:nowrap">${this.fmt(it.unitSell * it.qty)}</td></tr>`).join('');
+                    <td style="padding:9px 8px;text-align:center;border-bottom:1px solid #E5E7EB;font-weight:900;color:#2B3615;white-space:nowrap">${this.fmt(lineTotal(it))}</td></tr>`).join('');
                 const line = (l, v, strong) => `<div style="display:flex;justify-content:space-between;padding:7px 14px;${strong ? 'font-weight:900;' : ''}border-bottom:1px solid #E5E7EB"><span>${l}</span><span>${v}</span></div>`;
                 const validUntil = new Date(new Date(doc.date).getTime() + 7 * 86400000).toISOString();
                 const clientRow = (l, v) => v ? `<div><span style="color:#6B7280">${l}:</span> <strong>${this.esc(v)}</strong></div>` : '';
@@ -1829,7 +1837,7 @@
                             say('تم تحميل الـPDF وفتح تطبيق الإيميل، أرفق الملف ثم أرسل.');
                         } else say('تم ✓');
                     } else if (act === 'wa') {
-                        const lines = doc.items.map((it, i) => (i + 1) + '. ' + it.label + ': ' + it.qty + ' ' + it.unit + ' × ' + this.fmt(it.unitSell) + ' = ' + this.fmt(it.unitSell * it.qty) + ' ج').join('\n');
+                        const lines = doc.items.map((it, i) => (i + 1) + '. ' + it.label + ': ' + it.qty + ' ' + it.unit + ' × ' + this.fmt(it.unitSell) + ' = ' + this.fmt(lineTotal(it)) + ' ج').join('\n');
                         let text = (doc.type === 'invoice' ? 'فاتورة' : 'عرض سعر') + ' ' + doc.no + ' من ' + (doc.bizName || 'داركم للجبس بورد') + '\nالعميل: ' + (doc.client || 'الكريم') + '\n-----------------\n' + lines + '\n-----------------\n';
                         if (t.disc) text += 'الخصم: ' + this.fmt(t.disc) + ' ج\n';
                         if (doc.vat) text += 'ضريبة القيمة المضافة 14%: ' + this.fmt(t.vat) + ' ج\n';
