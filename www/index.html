@@ -165,6 +165,7 @@
         // =====================================================================
         const STORAGE_VERSION = 'darkom_v15_srv_2026';
         const APP_VERSION = '1.3.0';
+        const DEFAULT_BIZ_NAME = 'داركم للجبس بورد';
         const BUSINESS_PHONE = '01025013991';
         const BUSINESS_PHONE_INTL = '201025013991';
         const MAPS_URL = 'https://maps.google.com/?q=' + encodeURIComponent('الحي السابع، الشيخ زايد، محافظة الجيزة');
@@ -1402,7 +1403,7 @@
                 const tk = sessionStorage.getItem('darkom_admin_token'); if (!tk) return false;
                 try {
                     const r = await fetch(PRICING_API + '/api/admin/quotes', { method: 'POST', headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + tk },
-                        body: JSON.stringify({ code: x.verify.code, doc_no: x.no, doc_type: x.type, issued_at: x.date, total: this.docTotals(x).total, paid: x.type === 'invoice' ? this.docTotals(x).dep : 0, client: x.client || '', status: status || 'valid' }) });
+                        body: JSON.stringify({ code: x.verify.code, doc_no: x.no, doc_type: x.type, issued_at: x.date, total: this.docTotals(x).total, paid: x.type === 'invoice' ? this.docTotals(x).dep : 0, client: x.client || '', biz_name: x.bizName || '', status: status || 'valid' }) });
                     if (r.status === 401) { if (!this._authWarned) { this._authWarned = true; this.toast('سجّل الدخول من جديد لتفعيل رمز التحقق'); } return false; }
                     if (!r.ok) return false;
                     if (!status) { const d2 = this.loadDocs(); const y = d2.list.find(z => z.id === id); if (y && y.verify) { y.verify.synced = true; this.saveDocs(d2); } }
@@ -1449,7 +1450,7 @@
                     <div style="background:#E6EBD6;border-radius:16px;padding:20px 24px;display:flex;justify-content:space-between;align-items:center;color:#2B3615">
                         <div style="display:flex;align-items:center;gap:14px">
                             <svg viewBox="0 0 100 100" width="66" height="66" style="border-radius:14px;flex-shrink:0"><rect width="100" height="100" rx="20" fill="#52652A"/><g transform="translate(12 12) scale(.76)"><path d="M10,40 L50,15 L90,40 L90,85 L10,85 Z" fill="#F0CE41"/><rect x="30" y="50" width="18" height="18" fill="#52652A"/><rect x="52" y="50" width="18" height="18" fill="#F0CE41" stroke="#52652A" stroke-width="2"/><rect x="30" y="70" width="18" height="15" fill="#F0CE41" stroke="#52652A" stroke-width="2"/><rect x="52" y="70" width="18" height="15" fill="#52652A"/></g></svg>
-                            <div><div style="font-size:26px;font-weight:900;color:#52652A;line-height:1.5;margin-bottom:8px">داركم للجبس بورد</div>
+                            <div><div style="font-size:26px;font-weight:900;color:#52652A;line-height:1.5;margin-bottom:8px">${this.esc(doc.bizName || DEFAULT_BIZ_NAME)}</div>
                             <div style="font-size:12px;line-height:1.7;color:#68754A">DARKOM GYPSUM PRO — أسقف وحوائط وعزل</div></div>
                         </div>
                         <div style="text-align:left;line-height:1.8">
@@ -1481,7 +1482,7 @@
                     </div>
                     ${doc.notes ? `<div style="margin-top:18px;padding:12px 16px;background:#FFFBEB;border:1px solid #F0CE41;border-radius:10px;line-height:1.9"><strong>ملاحظات:</strong> ${this.esc(doc.notes).replace(/\n/g, '<br>')}</div>` : ''}
                     <div style="margin-top:26px;border-top:2px solid #2B3615;padding-top:12px;font-size:12px;color:#4B5563;line-height:2">
-                        ${isInv ? 'شكراً لتعاملكم مع داركم.' : 'الأسعار توريد وتركيب ومصنعية، غير شاملة الدهانات النهائية. العرض صالح 7 أيام من تاريخه.'}<br>
+                        ${isInv ? 'شكراً لتعاملكم مع ' + this.esc(doc.bizName || 'داركم') + '.' : 'الأسعار توريد وتركيب ومصنعية، غير شاملة الدهانات النهائية. العرض صالح 7 أيام من تاريخه.'}<br>
                         ضمان تنفيذ ${WARRANTY_LABEL} ضد عيوب التركيب (على التركيب فقط، ولا يشمل تلف الخامات من تسريب مياه أو سوء استخدام).<br>
                         للتأكيد أو الاستفسار: ${BUSINESS_PHONE} (واتساب / اتصال)${doc.showAddress === false ? '' : ' — الحي السابع، الشيخ زايد، محافظة الجيزة'} — ${WORKING_HOURS}.
                     </div>
@@ -1507,6 +1508,7 @@
                     <div style="background:#fff;border-radius:14px;padding:10px;margin-bottom:10px;font-family:Cairo,sans-serif">
                         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;font-weight:700;margin-bottom:8px">
                             <span style="font-weight:900;color:#14351D">${isInv ? '🧾 فاتورة' : '📄 عرض سعر'} ${doc.no}</span>
+                            <label style="display:flex;align-items:center;gap:4px">اسم الجهة <input type="text" maxlength="60" value="${this.esc(doc.bizName || DEFAULT_BIZ_NAME)}" style="width:150px;border:1px solid #ccc;border-radius:8px;padding:3px 6px" onchange="app.updateDoc('${id}',{bizName:(this.value.trim()||DEFAULT_BIZ_NAME)}); app.showDoc('${id}')"></label>
                             <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" ${doc.showAddress === false ? '' : 'checked'} onchange="app.updateDoc('${id}',{showAddress:this.checked}); app.showDoc('${id}')"> العنوان</label>
                             <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" ${doc.showQr === false ? '' : 'checked'} onchange="app.updateDoc('${id}',{showQr:this.checked}); app.showDoc('${id}')"> QR التحقق</label>
                             <label style="display:flex;align-items:center;gap:4px"><input type="checkbox" ${doc.vat ? 'checked' : ''} onchange="app.updateDoc('${id}',{vat:this.checked}); app.showDoc('${id}')"> ضريبة قيمة مضافة 14%</label>
