@@ -1221,6 +1221,10 @@
                                         <label class="text-[11px] font-bold text-gray-600">خصم (ج)<input type="number" min="0" value="${q.discount || ''}" placeholder="0" onchange="app.quoteDraft.discount=Math.max(0,Number(this.value)||0)" class="w-full border-2 rounded-xl px-3 py-2 text-xs font-black"></label>
                                         <label class="text-[11px] font-bold text-gray-600">عربون مدفوع (ج)<input type="number" min="0" value="${q.deposit || ''}" placeholder="0" onchange="app.quoteDraft.deposit=Math.max(0,Number(this.value)||0)" class="w-full border-2 rounded-xl px-3 py-2 text-xs font-black"></label>
                                     </div>
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <input type="text" maxlength="30" placeholder="رقم المستند (فاضي = تلقائي)" value="${q.docNo || ''}" onchange="app.quoteDraft.docNo=this.value" class="border-2 rounded-xl px-3 py-2 text-xs font-bold" dir="ltr">
+                                        <input type="number" min="1" placeholder="ابدأ الترقيم التلقائي من رقم" value="${q.startFrom || ''}" onchange="app.quoteDraft.startFrom=this.value" class="border-2 rounded-xl px-3 py-2 text-xs font-bold">
+                                    </div>
                                     <textarea rows="2" placeholder="ملاحظات / شروط الدفع (اختياري)" onchange="app.quoteDraft.notes=this.value" class="w-full border-2 rounded-xl px-3 py-2 text-xs font-bold">${this.esc(q.notes)}</textarea>
                                     <div class="grid grid-cols-2 gap-2 items-center">
                                         <label class="flex items-center gap-2 text-xs font-bold text-gray-700"><input type="checkbox" ${q.vat?'checked':''} onchange="app.quoteDraft.vat=this.checked" class="w-4 h-4 accent-primary"> ضريبة قيمة مضافة 14%</label>
@@ -1406,10 +1410,14 @@
                 if (!q.items || !q.items.length) { this.toast('أضف بنوداً للمقايسة أولاً'); return; }
                 const d = this.loadDocs();
                 const t = type === 'invoice' ? 'invoice' : 'quote';
+                const startFrom = parseInt(q.startFrom, 10);
+                if (startFrom > 0) { d.seq[t] = startFrom - 1; this.quoteDraft.startFrom = ''; }
                 d.seq[t] = (d.seq[t] || 0) + 1;
+                const customNo = String(q.docNo || '').trim().slice(0, 30);
+                if (customNo) this.quoteDraft.docNo = '';
                 const doc = {
                     id: 'doc_' + Date.now(), type: t,
-                    no: (t === 'invoice' ? 'INV-' : 'DQ-') + String(d.seq[t]).padStart(4, '0'),
+                    no: customNo || ((t === 'invoice' ? 'INV-' : 'DQ-') + String(d.seq[t]).padStart(4, '0')),
                     date: new Date().toISOString(),
                     client: q.client || '', phone: q.phone || '', email: q.email || '', address: q.address || '', project: q.project || '',
                     items: q.items.map(it => ({ label: it.label, unit: it.unit, qty: it.qty, unitSell: it.unitSell })),
@@ -1417,13 +1425,22 @@
                     notes: q.notes || '', paid: !!q.paid, payMethod: q.payMethod || '',
                     verify: { code: this.genVerifyCode(), synced: false }
                 };
+                const dupNo = d.list.some(x => x.no === doc.no);
                 d.list.unshift(doc); this.saveDocs(d);
+                if (dupNo) this.toast('تنبيه: الرقم ده مستخدم في مستند تاني (اتحفظ برضه)');
                 this.registerDoc(doc.id);
                 this.showDoc(doc.id);
             },
             getDoc(id) { return this.loadDocs().list.find(x => x.id === id); },
             updateDoc(id, patch) { const d = this.loadDocs(); const x = d.list.find(y => y.id === id); if (x) { Object.assign(x, patch); if (x.verify) x.verify.synced = false; this.saveDocs(d); this.registerDoc(id); } return x; },
             // --- التحقق من المستندات: رقم تحقق عشوائي + QR. السيرفر يخزن الرقم والتاريخ والإجمالي واسم العميل فقط ---
+            setDocNo(id, v) {
+                v = String(v || '').trim().slice(0, 30);
+                if (!v) { this.toast('الرقم فاضي، اتساب الرقم القديم'); this.showDoc(id); return; }
+                const dup = this.loadDocs().list.some(x => x.id !== id && x.no === v);
+                this.updateDoc(id, { no: v }); this.showDoc(id);
+                if (dup) this.toast('تنبيه: الرقم ده مستخدم في مستند تاني (اتحفظ برضه)');
+            },
             genVerifyCode() {
                 const A = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', b = new Uint8Array(10); crypto.getRandomValues(b);
                 return Array.from(b, x => A[x % A.length]).join('');
@@ -1457,7 +1474,7 @@
                 return list.slice(0, 40).map(x => {
                     const tt = this.docTotals(x);
                     return `<div class="flex items-center justify-between gap-2 bg-gray-50 border border-gray-100 rounded-xl p-2.5 text-xs">
-                        <div class="min-w-0"><div class="font-black text-primaryDark">${x.type === 'invoice' ? '🧾' : '📄'} ${x.no} ${x.type === 'invoice' ? ({ paid: '<span class="text-green-700">(مدفوعة)</span>', partial: '<span class="text-amber-700">(سداد جزئي)</span>', unpaid: '<span class="text-red-600">(غير مدفوعة)</span>' })[this.payStatus(x)] : ''}</div>
+                        <div class="min-w-0"><div class="font-black text-primaryDark">${x.type === 'invoice' ? '🧾' : '📄'} ${this.esc(x.no)} ${x.type === 'invoice' ? ({ paid: '<span class="text-green-700">(مدفوعة)</span>', partial: '<span class="text-amber-700">(سداد جزئي)</span>', unpaid: '<span class="text-red-600">(غير مدفوعة)</span>' })[this.payStatus(x)] : ''}</div>
                         <div class="text-gray-500 truncate">${this.esc(x.client || 'بدون اسم')} — ${this.docDateStr(x.date)} — ${this.fmt(tt.total)} ج</div></div>
                         <div class="flex gap-1 shrink-0"><button onclick="app.showDoc('${x.id}')" class="bg-primary text-gold px-2.5 py-1 rounded-lg font-bold">فتح</button><button onclick="app.deleteDoc('${x.id}')" class="text-red-500 font-bold px-1">✕</button></div></div>`;
                 }).join('');
@@ -1533,7 +1550,7 @@
                         </div>
                         <div style="text-align:left;line-height:1.8">
                             <div style="font-size:24px;font-weight:900;color:#52652A">${title}</div>
-                            <div style="font-size:13px;direction:ltr;text-align:left">${doc.no}</div>
+                            <div style="font-size:13px;direction:ltr;text-align:left">${this.esc(doc.no)}</div>
                             <div style="font-size:12px;color:#68754A">التاريخ: ${this.docDateStr(doc.date)}</div>
                             ${isInv ? '' : `<div style="font-size:12px;color:#68754A">صالح حتى: ${this.docDateStr(validUntil)}</div>`}
                         </div>
@@ -1588,10 +1605,11 @@
                 ov.innerHTML = `<div dir="rtl" style="max-width:860px;margin:0 auto;padding:10px">
                     <div style="background:#fff;border-radius:14px;padding:10px;margin-bottom:10px;font-family:Cairo,sans-serif">
                         <div style="display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:12px;font-weight:700;margin-bottom:8px">
-                            <span style="font-weight:900;color:#14351D">${isInv ? '🧾 فاتورة' : '📄 عرض سعر'} ${doc.no}</span>
+                            <span style="font-weight:900;color:#14351D">${isInv ? '🧾 فاتورة' : '📄 عرض سعر'} ${this.esc(doc.no)}</span>
                             <details style="flex-basis:100%;background:#F4F7F5;border-radius:10px;padding:6px 10px" ${this._editOpen ? 'open' : ''} ontoggle="app._editOpen=this.open">
                                 <summary style="cursor:pointer;font-weight:900;color:#52652A">✏️ تعديل الجهة والنصوص والألوان والشكل والشعار (للمستند ده فقط)</summary>
                                 <div style="display:grid;gap:6px;margin-top:8px;font-weight:700">
+                                    <label>رقم المستند (أي نص) <input type="text" maxlength="30" value="${this.esc(doc.no)}" style="width:100%;border:1px solid #ccc;border-radius:8px;padding:4px 6px;direction:ltr" onchange="app.setDocNo('${id}', this.value)"></label>
                                     <label>اسم الجهة <input type="text" maxlength="60" value="${this.esc(doc.bizName || DEFAULT_BIZ_NAME)}" style="width:100%;border:1px solid #ccc;border-radius:8px;padding:4px 6px" onchange="app.updateDoc('${id}',{bizName:(this.value.trim()||DEFAULT_BIZ_NAME)}); app.showDoc('${id}')"></label>
                                     <label>السطر تحت الاسم (فاضي = يتشال) <input type="text" maxlength="90" value="${this.esc(doc.bizSub != null ? doc.bizSub : DEFAULT_BIZ_SUB)}" style="width:100%;border:1px solid #ccc;border-radius:8px;padding:4px 6px" onchange="app.updateDoc('${id}',{bizSub:this.value}); app.showDoc('${id}')"></label>
                                     <label>سطر الشروط الأول (فاضي = يتشال) <textarea rows="2" maxlength="300" style="width:100%;border:1px solid #ccc;border-radius:8px;padding:4px 6px" onchange="app.updateDoc('${id}',{terms:this.value}); app.showDoc('${id}')">${this.esc(doc.terms != null ? doc.terms : (isInv ? 'شكراً لتعاملكم مع ' + (doc.bizName || 'داركم') + '.' : 'الأسعار توريد وتركيب ومصنعية، غير شاملة الدهانات النهائية. العرض صالح 7 أيام من تاريخه.'))}</textarea></label>
@@ -1719,7 +1737,7 @@
                 const doc = this.getDoc(id); if (!doc) return;
                 const busy = document.getElementById('doc-busy');
                 const say = m => { if (busy) busy.textContent = m; };
-                const base = 'Darkom-' + doc.no;
+                const base = (doc.bizName ? 'Doc' : 'Darkom') + '-' + String(doc.no).replace(/[^\w\u0600-\u06FF-]+/g, '_');
                 const t = this.docTotals(doc);
                 try {
                     if (act === 'pdf' || act === 'png') {
@@ -1732,14 +1750,14 @@
                         const blob = await this.docBlob(doc, 'pdf');
                         const r = await this.deliverFile(blob, base + '.pdf', 'share');
                         if (act === 'email' && r === 'downloaded') {
-                            const subj = (doc.type === 'invoice' ? 'فاتورة ' : 'عرض سعر ') + doc.no + ' - داركم للجبس بورد';
-                            const body = 'السلام عليكم ' + (doc.client || '') + '،\nمرفق ' + (doc.type === 'invoice' ? 'الفاتورة' : 'عرض السعر') + ' رقم ' + doc.no + ' بإجمالي ' + this.fmt(t.total) + ' ج.م.\n(أرفق ملف PDF الذي تم تحميله الآن)\n\nداركم للجبس بورد - ' + BUSINESS_PHONE;
+                            const subj = (doc.type === 'invoice' ? 'فاتورة ' : 'عرض سعر ') + doc.no + ' - ' + (doc.bizName || 'داركم للجبس بورد');
+                            const body = 'السلام عليكم ' + (doc.client || '') + '،\nمرفق ' + (doc.type === 'invoice' ? 'الفاتورة' : 'عرض السعر') + ' رقم ' + doc.no + ' بإجمالي ' + this.fmt(t.total) + ' ج.م.\n(أرفق ملف PDF الذي تم تحميله الآن)\n\n' + (doc.bizName || 'داركم للجبس بورد') + ' - ' + BUSINESS_PHONE;
                             window.location.href = 'mailto:' + encodeURIComponent(doc.email || '') + '?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
                             say('تم تحميل الـPDF وفتح تطبيق الإيميل، أرفق الملف ثم أرسل.');
                         } else say('تم ✓');
                     } else if (act === 'wa') {
                         const lines = doc.items.map((it, i) => (i + 1) + '. ' + it.label + ': ' + it.qty + ' ' + it.unit + ' × ' + this.fmt(it.unitSell) + ' = ' + this.fmt(it.unitSell * it.qty) + ' ج').join('\n');
-                        let text = (doc.type === 'invoice' ? 'فاتورة' : 'عرض سعر') + ' ' + doc.no + ' من داركم للجبس بورد\nالعميل: ' + (doc.client || 'الكريم') + '\n-----------------\n' + lines + '\n-----------------\n';
+                        let text = (doc.type === 'invoice' ? 'فاتورة' : 'عرض سعر') + ' ' + doc.no + ' من ' + (doc.bizName || 'داركم للجبس بورد') + '\nالعميل: ' + (doc.client || 'الكريم') + '\n-----------------\n' + lines + '\n-----------------\n';
                         if (t.disc) text += 'الخصم: ' + this.fmt(t.disc) + ' ج\n';
                         if (doc.vat) text += 'ضريبة القيمة المضافة 14%: ' + this.fmt(t.vat) + ' ج\n';
                         text += 'الإجمالي: ' + this.fmt(t.total) + ' ج.م';
